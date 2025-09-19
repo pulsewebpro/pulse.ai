@@ -21,3 +21,14 @@ GUARDADO*/
 # Backups locales (no compilar)
 _copia de seguridad*/
 GUARDADO*/
+
+# --- BACKUPS LOCALES (nunca compilar ni subir) ---
+_copia de seguridad*/
+_copia de seguridad_*/
+**/_copia de seguridad*/
+**/_copia de seguridad_*/
+GUARDADO*/
+**/GUARDADO*/
+backup*/
+**/backup*/
+# --------------------------------------------------
