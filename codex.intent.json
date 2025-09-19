@@ -1,0 +1,10 @@
+{
+  "summary": "Describe aquí qué vas a hacer",
+  "touches": ["(rutas/archivos que tocarás)"],
+  "why": "Motivo alineado con normas/…",
+  "refs": [
+    "normas/testamento.md",
+    "normas/vision.md",
+    "normas/psicologia.md"
+  ]
+}

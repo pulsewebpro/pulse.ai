@@ -1,0 +1,99 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import { respondLocal } from "../../lib/pulseBrain";
+import { isOffTopic } from "../../lib/pulsePolicy";
+
+/**
+ * /api/pulse
+ * - Si hay OPENAI_API_KEY → llama a OpenAI con JSON-mode y guardarraíles.
+ * - Si no hay clave / error → fallback local con frases café + sector.
+ * - Capado: si off-topic → respuesta amable y redirigida al ámbito de webs/negocios.
+ */
+
+type ApiOut = {
+  mode: "live" | "local" | "local_error" | "local_catch" | "offtopic";
+  state: "feedback" | "cierre" | "error";
+  text: string;
+  mood: "neutral" | "celebrate" | "oops";
+  meta?: any;
+};
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiOut>) {
+  try {
+    const { message } = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
+    const userMsg = String(message || "").trim();
+    const apiKey = process.env.OPENAI_API_KEY || process.env.PULSE_OPENAI_KEY;
+    const model = process.env.PULSE_OPENAI_MODEL || "gpt-4o-mini";
+
+    // CAPADO: fuera de ámbito → no llamamos IA, respondemos amable y redirigimos
+    if (!userMsg || isOffTopic(userMsg)) {
+      const text =
+        "Soy Pulse y estoy enfocado solo en webs y negocios. Cuéntame qué web quieres (p. ej., “landing para mi cafetería con carta y WhatsApp”) y te la sirvo caliente ☕⚡.";
+      return res.status(200).json({ mode: "offtopic", state: "feedback", text, mood: "neutral" });
+    }
+
+    // Si no hay clave → fallback local con cerebro café
+    if (!apiKey) {
+      const out = respondLocal(userMsg);
+      return res.status(200).json({ mode: "local", ...out });
+    }
+
+    // Prompt seguro + JSON mode
+    const system = [
+      "Eres Pulse, socio creativo cercano. Respondes SOLO sobre webs/negocios.",
+      "Tono: cálido, premium, con referencias ligeras al café. Breve (1–2 frases).",
+      "Objetivo: dar una micro-propuesta clara y empujar al siguiente paso (preview/CTA).",
+      "Prohibido: temas fuera de webs/negocios, consejos médicos/legales/financieros, contenido sensible.",
+      "Idioma: español (ES).",
+      "Responde SIEMPRE en JSON con las claves: {\"reply\":string,\"sector\":string,\"next_step\":string}. Sin texto fuera del JSON."
+    ].join(" ");
+
+    const user = [
+      `Usuario: ${userMsg}`,
+      "Devuelve un JSON. Ejemplo:",
+      "{\"reply\":\"Tu idea huele a conversión… ☕⚡\",\"sector\":\"ecommerce\",\"next_step\":\"Te preparo un hero con producto destacado y CTA a compra.\"}"
+    ].join("\n");
+
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model,
+        response_format: { type: "json_object" },
+        temperature: 0.8,
+        max_tokens: 180,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user }
+        ]
+      })
+    });
+
+    if (!r.ok) {
+      const out = respondLocal(userMsg);
+      return res.status(200).json({ mode: "local_error", ...out });
+    }
+
+    const data = await r.json();
+    const raw = data?.choices?.[0]?.message?.content || "{}";
+    let parsed: { reply?: string; sector?: string; next_step?: string } = {};
+    try { parsed = JSON.parse(raw); } catch { /* noop */ }
+
+    const text = (parsed.reply && String(parsed.reply).trim())
+      ? String(parsed.reply).trim()
+      : respondLocal(userMsg).text;
+
+    return res.status(200).json({
+      mode: "live",
+      state: "cierre",
+      text,
+      mood: "celebrate",
+      meta: { sector: parsed.sector || null, next_step: parsed.next_step || null }
+    });
+  } catch (_e) {
+    const out = respondLocal("");
+    return res.status(200).json({ mode: "local_catch", ...out });
+  }
+}

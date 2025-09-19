@@ -1,0 +1,62 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import OpenAI from "openai";
+import { PULSE_SYSTEM_PROMPT } from "@/lib/pulse-persona";
+
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+/**
+ * Body esperado:
+ * {
+ *   messages: [{ role: "user"|"assistant"|"system", content: string } ...],
+ *   locale?: "es"|"en"|"fr"
+ * }
+ */
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  try {
+    const { messages = [], locale } = req.body ?? {};
+    const model = process.env.PULSE_OPENAI_MODEL || "gpt-4o-mini";
+
+    // Inyección de sistema (primero de la lista)
+    const systemMsg = { role: "system" as const, content: PULSE_SYSTEM_PROMPT };
+
+    // Guardia de foco: si el último user pide algo fuera de scope, elegancia y redirección
+    const lastUser = [...messages].reverse().find((m: any) => m?.role === "user");
+    const outside = (txt: string) => {
+      const t = (txt || "").toLowerCase();
+      // Palabras clave rudimentarias para cortar temas no web/negocio
+      const banned = [
+        "depresión","diagnóstico","medicina","política","religión","guerra",
+        "trading","criptomoneda","hacking","piratería","invasión de privacidad",
+        "armas","drogas","apuestas","ensayo académico","tarea escolar",
+      ];
+      return banned.some(b => t.includes(b));
+    };
+
+    const redirectionHint = lastUser?.content && outside(lastUser.content)
+      ? [{
+          role: "assistant" as const,
+          content:
+`Puedo ayudarte si lo enfocamos en tu **web o negocio**. 
+Por ejemplo, puedo convertir ese tema en una sección de tu sitio (blog, recursos, landing educativa) y plantear un enfoque responsable y útil. ¿Te parece si lo orientamos a tu proyecto online? ☕`
+        }]
+      : [];
+
+    const completion = await client.chat.completions.create({
+      model,
+      temperature: 0.7,
+      max_tokens: 600,
+      messages: [systemMsg, ...redirectionHint, ...messages],
+    });
+
+    const text = completion.choices?.[0]?.message?.content ?? "…";
+    res.status(200).json({ ok: true, content: text });
+  } catch (err: any) {
+    console.error("Pulse API error:", err?.message || err);
+    res.status(500).json({
+      ok: false,
+      error: "Pulse tuvo un pequeño derrame de café. Ya limpio y vuelvo a intentarlo.",
+    });
+  }
+}

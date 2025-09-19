@@ -1,0 +1,46 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import { respondLocal } from "../../lib/pulseBrain";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const { message } = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const apiKey = process.env.OPENAI_API_KEY || process.env.PULSE_OPENAI_KEY;
+
+    if (!apiKey) {
+      const out = respondLocal(message || "");
+      return res.status(200).json({ mode: "local", ...out });
+    }
+
+    const sys = "Eres Pulse, socio creativo cercano, tono premium, referencias al café. Responde corto (1-2 frases) y remata con un cierre con café hacia la preview.";
+    const prompt = `Usuario: ${message}\nRespuesta:`;
+
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.9,
+        max_tokens: 120
+      })
+    });
+
+    if (!r.ok) {
+      const out = respondLocal(message || "");
+      return res.status(200).json({ mode: "local_error", ...out });
+    }
+
+    const data = await r.json();
+    const text = data?.choices?.[0]?.message?.content?.trim() || respondLocal(message || "").text;
+    return res.status(200).json({ mode: "live", state: "cierre", text, mood: "celebrate" });
+  } catch (_e) {
+    const out = respondLocal("");
+    return res.status(200).json({ mode: "local_catch", ...out });
+  }
+}

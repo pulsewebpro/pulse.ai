@@ -1,0 +1,110 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import OpenAI from "openai";
+import { PULSE_SYSTEM_PROMPT } from "@/lib/pulse-persona";
+import { assertEnv } from "@/lib/env";
+import { trimHistory } from "@/lib/chat-helpers";
+
+type Msg = { role: "system" | "user" | "assistant"; content: string };
+
+// Rate limit en memoria (best-effort, serverless-safe-ish)
+const BUCKET = new Map<string, { count: number; reset: number }>();
+const WINDOW_MS = 15_000; // 15s
+const LIMIT = 6; // 6 peticiones / 15s por IP
+
+function allowed(ip: string) {
+  const now = Date.now();
+  const entry = BUCKET.get(ip);
+  if (!entry || now > entry.reset) {
+    BUCKET.set(ip, { count: 1, reset: now + WINDOW_MS });
+    return true;
+  }
+  if (entry.count < LIMIT) {
+    entry.count += 1;
+    return true;
+  }
+  return false;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const ip =
+    (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+    req.socket.remoteAddress ||
+    "0.0.0.0";
+  if (!allowed(ip)) {
+    return res.status(429).json({ ok: false, error: "Demasiadas peticiones. Dame un sorbo ☕ y sigo." });
+  }
+
+  try {
+    assertEnv();
+    const started = Date.now();
+
+    const body = req.body ?? {};
+    const model = process.env.PULSE_OPENAI_MODEL || "gpt-4o-mini";
+
+    let messages: Msg[] = Array.isArray(body.messages) ? body.messages : [];
+    // Sanitizar tipos básicos
+    messages = messages
+      .filter((m) => m && (m.role === "user" || m.role === "assistant" || m.role === "system"))
+      .map((m) => ({ role: m.role, content: String(m.content ?? "") }));
+
+    // Recorte seguro del historial (la persona se inyecta como system aparte)
+    const userContext = trimHistory(messages, 2200);
+
+    // Redirección educada si el último user está fuera de scope
+    const lastUser = [...userContext].reverse().find((m) => m.role === "user");
+    const outside = (txt: string) => {
+      const t = (txt || "").toLowerCase();
+      const banned = [
+        "depresión","diagnóstico","medicina","política","religión","guerra","suicidio",
+        "trading","cripto","hacking","piratería","armas","drogas","apuestas","tarea escolar",
+      ];
+      return banned.some((b) => t.includes(b));
+    };
+    const redirectionHint =
+      lastUser?.content && outside(lastUser.content)
+        ? [
+            {
+              role: "assistant" as const,
+              content:
+                "Puedo ayudarte si lo enfocamos en tu **web o negocio**. Puedo convertir ese tema en una sección útil (blog, recursos, landing). ¿Cómo lo orientamos para tu sitio? ☕",
+            },
+          ]
+        : [];
+
+    const systemMsg = { role: "system" as const, content: PULSE_SYSTEM_PROMPT };
+
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const completion = await client.chat.completions.create({
+      model,
+      temperature: 0.7,
+      max_tokens: 620,
+      messages: [systemMsg, ...redirectionHint, ...userContext],
+    });
+
+    const text = completion.choices?.[0]?.message?.content ?? "…";
+    const elapsed = Date.now() - started;
+
+    // Telemetría simple en logs
+    console.log(
+      JSON.stringify({
+        tag: "pulse_api",
+        ip,
+        model,
+        ms: elapsed,
+        chars_in: userContext.reduce((n, m) => n + (m.content?.length || 0), 0),
+        chars_out: text.length,
+      })
+    );
+
+    res.status(200).json({ ok: true, content: text });
+  } catch (err: any) {
+    console.error("Pulse API error:", err?.message || err);
+    res.status(500).json({
+      ok: false,
+      error:
+        "Oops, casi derramo el café. Tuve un fallo temporal. Reintenta y sigo contigo. ☕",
+    });
+  }
+}

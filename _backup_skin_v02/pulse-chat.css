@@ -1,0 +1,25 @@
+/* Pulse · Chat Presencia Viva */
+.pulse-typing {
+  display:inline-flex; gap:6px; align-items:center;
+  padding:10px 14px; border-radius:14px;
+  background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25);
+  box-shadow:0 0 24px rgba(56,189,248,0.18) inset, 0 0 28px rgba(56,189,248,0.12);
+  backdrop-filter: blur(8px);
+}
+.dot {
+  width:6px; height:6px; border-radius:999px; background:#38BDF8; opacity:.5;
+  animation: pulseDots 1.2s infinite ease-in-out;
+}
+.dot:nth-child(2){animation-delay:.15s}
+.dot:nth-child(3){animation-delay:.3s}
+@keyframes pulseDots {0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(-3px);opacity:1}}
+.bubble-pulse {
+  background:linear-gradient(180deg, rgba(15,23,42,.8), rgba(2,6,23,.6));
+  border:1px solid rgba(56,189,248,.28); border-radius:18px; padding:14px 16px;
+  box-shadow:0 12px 40px rgba(0,0,0,.45), 0 0 28px rgba(56,189,248,.14);
+  color:#E6F6FF;
+}
+.bubble-user {
+  background:rgba(148,163,184,.12); border:1px solid rgba(148,163,184,.28);
+  color:#E5E7EB; border-radius:18px; padding:14px 16px;
+}

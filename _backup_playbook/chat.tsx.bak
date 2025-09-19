@@ -1,0 +1,299 @@
+import React, { useEffect, useRef, useState } from "react";
+import Head from "next/head";
+import { pulseBrand, quips, planFromGoal, PulseGoal } from "@/lib/pulse/persona";
+import { loadMemory, saveMemory, loadLog, saveLog, Msg } from "@/lib/pulse/memory";
+
+/** ---- Chips ---- */
+const chips: { icon: string; label: string; goal: PulseGoal; text: string }[] = [
+  { icon:"☕", label:"VENTAS", goal:"ventas", text:"Quiero poner mis productos online rápido." },
+  { icon:"📅", label:"GENERADOR RESERVAS", goal:"reservas", text:"Necesito que reserven mesa/cita sin llamar." },
+  { icon:"⚡", label:"Captar clientes", goal:"leads", text:"Soy agencia/consultor y quiero leads premium." },
+  { icon:"🎉", label:"CARTEL PARA EVENTO", goal:"evento", text:"Tengo concierto/gala/fiesta y necesito web YA." },
+  { icon:"🌐", label:"Portfolio creativo", goal:"portfolio", text:"Soy fotógrafo, artista, diseñador o dev freelance." },
+  { icon:"💎", label:"Marca premium", goal:"premium", text:"Quiero lujo, alto valor, estilo Tesla." },
+  { icon:"🏪", label:"Negocio local", goal:"local", text:"Tienda física, gym, peluquería: quiero presencia digital." },
+  { icon:"✍️", label:"Blog / Contenido", goal:"blog", text:"Para escritores, periodistas, community managers." },
+  { icon:"🎥", label:"Influencer / Creador", goal:"influencer", text:"Soy tiktoker/streamer y quiero centralizar mis links/brand." },
+  { icon:"🌱", label:"Proyecto social", goal:"social", text:"ONG, comunidad, activismo." },
+];
+
+/** ---- Detecciones ---- */
+const detectName = (t:string) => t.match(/\b(me llamo|mi nombre es)\s+([A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)\b/i)?.[2];
+const detectGoal = (t:string):PulseGoal => {
+  const s=t.toLowerCase();
+  if(/venta|tienda|checkout|producto/.test(s)) return "ventas";
+  if(/reserva|cita|booking|mesa/.test(s)) return "reservas";
+  if(/lead|captar|prospecto|formulario/.test(s)) return "leads";
+  if(/portfolio|portafolio|proyecto|trabajo/.test(s)) return "portfolio";
+  if(/premium|lujo|tesla|exclusiv/.test(s)) return "premium";
+  if(/local|peluquer|gimnasio|mapa|horario|barrio/.test(s)) return "local";
+  if(/blog|contenido|newsletter|artícul/.test(s)) return "blog";
+  if(/influencer|tiktok|youtube|twitch|instagram|links?/.test(s)) return "influencer";
+  if(/social|ong|comunidad|activismo/.test(s)) return "social";
+  if(/evento|concierto|gala|fiesta|entradas?/.test(s)) return "evento";
+  return "desconocido";
+};
+
+/** ---- Flujo de preguntas por intención ---- */
+type QKey =
+  | "ventas.tipoProductos" | "ventas.pagos"
+  | "reservas.negocio" | "reservas.horarios"
+  | "leads.publico" | "leads.oferta"
+  | "portfolio.disciplina" | "portfolio.casos"
+  | "premium.adjetivos" | "premium.referencias"
+  | "local.ciudad" | "local.servicios"
+  | "blog.temas" | "blog.frecuencia"
+  | "influencer.plataformas" | "influencer.monetizacion"
+  | "social.mision" | "social.llamada"
+  | "evento.fecha" | "evento.lugar";
+
+type FollowUp = { key: QKey; ask: (name?:string)=>string; save: (mem:any, answer:string)=>void };
+
+const askFlows: Record<PulseGoal, FollowUp[]> = {
+  ventas: [
+    { key:"ventas.tipoProductos", ask:(n)=>`Perfecto ${n?`${n}`:""}, ventas 💎. ¿Qué vendes exactamente? (camisetas, cursos, software…)`, save:(m,a)=>{ m.products=a; } },
+    { key:"ventas.pagos", ask:()=>`¿Cómo quieres cobrar? (Stripe, PayPal, transferencia) y ¿envíos o solo digital?`, save:(m,a)=>{ m.payments=a; } },
+  ],
+  reservas: [
+    { key:"reservas.negocio", ask:(n)=>`Reservas 📅. ¿De qué negocio hablamos, ${n||""}? (restaurante, clínica, barbería…)`, save:(m,a)=>{ m.sector=a; } },
+    { key:"reservas.horarios", ask:()=>`¿Horarios y días? Así preparo el picker con bloqueos y WhatsApp.`, save:(m,a)=>{ m.hours=a; } },
+  ],
+  leads: [
+    { key:"leads.publico", ask:()=>`Leads ⚡. ¿Cuál es tu público objetivo? (ej: pymes tech en España)`, save:(m,a)=>{ m.audience=a; } },
+    { key:"leads.oferta",  ask:()=>`¿Qué oferta empujamos? (auditoría, mentoring, paquete mensual…)`, save:(m,a)=>{ m.offer=a; } },
+  ],
+  portfolio: [
+    { key:"portfolio.disciplina", ask:()=>`Portfolio 🌐. ¿Tu disciplina principal? (foto, diseño, dev, arte…)`, save:(m,a)=>{ m.discipline=a; } },
+    { key:"portfolio.casos",      ask:()=>`¿2–3 proyectos estrella? Dame nombres o descripciones cortas.`, save:(m,a)=>{ m.cases=a; } },
+  ],
+  premium: [
+    { key:"premium.adjetivos",     ask:()=>`Marca premium 💎. Dame 3 adjetivos (minimal, serio, high-tech…).`, save:(m,a)=>{ m.brandWords=a; } },
+    { key:"premium.referencias",   ask:()=>`¿Referencias visuales? (Tesla, Apple, Dior…).`, save:(m,a)=>{ m.refs=a; } },
+  ],
+  local: [
+    { key:"local.ciudad",    ask:()=>`Negocio local 🏪. ¿En qué ciudad/barrio estás?`, save:(m,a)=>{ m.city=a; } },
+    { key:"local.servicios", ask:()=>`¿Servicios principales y precios aproximados?`, save:(m,a)=>{ m.services=a; } },
+  ],
+  blog: [
+    { key:"blog.temas",       ask:()=>`Blog ✍️. ¿Temas principales? (producto, diseño, marketing…)`, save:(m,a)=>{ m.topics=a; } },
+    { key:"blog.frecuencia",  ask:()=>`¿Frecuencia ideal? (semanal, quincenal) ¿y newsletter?`, save:(m,a)=>{ m.frequency=a; } },
+  ],
+  influencer: [
+    { key:"influencer.plataformas",   ask:()=>`Influencer 🎥. ¿En qué canales te mueves? (TikTok, IG, YouTube, Twitch…)`, save:(m,a)=>{ m.platforms=a; } },
+    { key:"influencer.monetizacion",  ask:()=>`¿Monetización? (afiliados, cursos, suscripción, merch). Te preparo la vitrina.`, save:(m,a)=>{ m.monetization=a; } },
+  ],
+  social: [
+    { key:"social.mision", ask:()=>`Proyecto social 🌱. ¿Misión en una frase (clara y humana)?`, save:(m,a)=>{ m.mission=a; } },
+    { key:"social.llamada", ask:()=>`¿Llamada a la acción principal? (donar, unirse, voluntariado)`, save:(m,a)=>{ m.cta=a; } },
+  ],
+  evento: [
+    { key:"evento.fecha", ask:()=>`Evento 🎉. ¿Fecha y hora? Pongo contador y agenda.`, save:(m,a)=>{ m.date=a; } },
+    { key:"evento.lugar", ask:()=>`¿Lugar/ciudad? ¿venta de entradas o registro gratuito?`, save:(m,a)=>{ m.venue=a; } },
+  ],
+  desconocido: [],
+};
+
+/** ---- Preview contextual (texto) ---- */
+const previewText = (goal: PulseGoal, m:any) => {
+  const base = `Preview en vivo · foco: ${goal !== "desconocido" ? goal : "descubrir"} · ${pulseBrand.claim}`;
+  switch(goal){
+    case "influencer": return `Preview · Hub creador: bio + links + tienda (${m?.platforms||"plataformas"})`;
+    case "reservas":   return `Preview · Reservas: agenda + WhatsApp (${m?.sector||"negocio"})`;
+    case "ventas":     return `Preview · Tienda: hero + grid + 1-click (${m?.products||"productos"})`;
+    case "leads":      return `Preview · Leads: form 3 pasos (${m?.audience||"audiencia"})`;
+    case "portfolio":  return `Preview · Portfolio: grid proyectos (${m?.discipline||"disciplina"})`;
+    case "premium":    return `Preview · Premium: minimal Tesla (${m?.brandWords||"adjetivos"})`;
+    case "local":      return `Preview · Local: mapa + horarios (${m?.city||"ciudad"})`;
+    case "blog":       return `Preview · Blog: feed + newsletter (${m?.topics||"temas"})`;
+    case "social":     return `Preview · ONG: misión + donaciones (${m?.mission||"misión"})`;
+    case "evento":     return `Preview · Evento: cartel + contador (${m?.date||"fecha"})`;
+    default: return base;
+  }
+};
+
+export default function ChatPage(){
+  /** --------- Anti-hydration: render estable y luego cargamos localStorage --------- */
+  const defaultWelcome: Msg = {
+    role:"pulse",
+    text:`Estoy contigo. Háblame de tu web o negocio. ¿Qué te gustaría lograr primero: **ventas**, **reservas** o **leads**? ${pulseBrand.claim}`,
+    ts: Date.now()
+  };
+
+  const [mounted, setMounted] = useState(false);
+  const [mem, setMem] = useState<any>({ jokesOn:true, goal:"desconocido", visits:1, createdAt:Date.now() });
+  const [messages, setMessages] = useState<Msg[]>([defaultWelcome]); // mismo SSR/cliente inicial
+  const [idea,setIdea]=useState("");
+  const [activeChip,setActiveChip]=useState<number|null>(null);
+  const [typing,setTyping]=useState(false);
+  const [humorTick,setHumorTick]=useState(0);
+  const [queue,setQueue]=useState<FollowUp[]>([]);
+  const listRef=useRef<HTMLDivElement>(null);
+
+  // Cargamos memoria/log tras montar (cliente)
+  useEffect(()=>{
+    setMounted(true);
+    const m = loadMemory();
+    const log = loadLog();
+    setMem(m);
+    if (log && log.length) {
+      setMessages(log);
+    } else {
+      setMessages([defaultWelcome]);
+    }
+  },[]);
+
+  // Persistencia y autoscroll
+  useEffect(()=>{ if(mounted) saveMemory(mem); },[mem,mounted]);
+  useEffect(()=>{ if(mounted) saveLog(messages); },[messages,mounted]);
+  useEffect(()=>{ listRef.current?.scrollTo({top:listRef.current.scrollHeight,behavior:"smooth"}); },[messages.length,typing]);
+
+  /** Helpers */
+  const pushPulse = (text:string)=> setMessages(m=>[...m,{role:"pulse",text,ts:Date.now()}]);
+  const pushUser  = (text:string)=> setMessages(m=>[...m,{role:"user", text,ts:Date.now()}]);
+  const maybeQuip = () => { const next=humorTick+1; setHumorTick(next); return mem.jokesOn && next%3===0 ? `\n\n> ${quips[Math.floor(Math.random()*quips.length)]}` : ""; };
+
+  /** Responder con intención + pregunta natural */
+  const respond = async (userText:string, hint?:PulseGoal) => {
+    const name = detectName(userText);
+    const goal = hint ?? detectGoal(userText);
+    setMem((m:any)=>{
+      const n={...m};
+      if(name) n.name = name[0].toUpperCase()+name.slice(1);
+      if(goal && goal!=="desconocido") n.goal = goal;
+      n.lastIdea = userText;
+      return n;
+    });
+
+    setTyping(true);
+    await new Promise(r=>setTimeout(r, 360+Math.random()*420));
+
+    // Si hay preguntas en cola → continuar
+    if(queue.length>0){
+      const [, ...rest] = queue;
+      setQueue(rest);
+      const nxt = rest[0];
+      const q  = nxt ? nxt.ask(mem.name) : null;
+      pushPulse(`${name?`Encantado, **${name[0].toUpperCase()+name.slice(1)}**. `:""}¡Genial! Tomo nota. ${q ? q : planFromGoal(goal||mem.goal||"desconocido", mem.name, mem.jokesOn) + maybeQuip()}`);
+      setTyping(false);
+      return;
+    }
+
+    // Abrir primera pregunta del flujo
+    const flow = askFlows[goal||"desconocido"];
+    if(flow && flow.length){
+      setQueue(flow.slice(1));
+      const first = flow[0];
+      const open  = planFromGoal(goal||"desconocido", mem.name, false);
+      pushPulse(`${open}\n${first.ask(mem.name)}`);
+    }else{
+      pushPulse(`${planFromGoal(goal||mem.goal||"desconocido", mem.name, mem.jokesOn)}${maybeQuip()}`);
+    }
+    setTyping(false);
+  };
+
+  /** Enviar input */
+  const send = async ()=>{
+    const text=idea.trim();
+    if(!text) return;
+    pushUser(text);
+    setIdea("");
+
+    // Guardar respuesta de la pregunta en curso
+    if(queue.length>0){
+      const cur = queue[0]!;
+      setMem((m:any)=>{ const n={...m}; cur.save(n,text); return n; });
+    }else{
+      // si había flujo iniciado y contestamos la primera
+      const flow = askFlows[mem.goal || "desconocido"];
+      if(flow && flow.length){
+        const first = flow[0];
+        setMem((m:any)=>{ const n={...m}; first.save(n,text); return n; });
+      }
+    }
+    await respond(text);
+  };
+
+  const onEnter=async(e:React.KeyboardEvent<HTMLInputElement>)=>{
+    if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); await send(); }
+  };
+
+  /** Chip pulsado */
+  const onChip=async(idx:number)=>{
+    const pick=chips[idx];
+    setActiveChip(idx);
+    setIdea(pick.text);
+    pushPulse(`Entendido: **${pick.label}**. Vamos a por ello.`);
+    const flow = askFlows[pick.goal] || [];
+    setMem((m:any)=>({ ...m, goal: pick.goal }));
+    if(flow.length){
+      setQueue(flow.slice(1));
+      pushPulse(flow[0].ask(mem.name));
+    }else{
+      await respond(pick.text, pick.goal);
+    }
+  };
+
+  return (
+    <>
+      <Head>
+        <title>Chat con Pulse ☕⚡</title>
+        <meta name="description" content={pulseBrand.claim} />
+      </Head>
+
+      <div className="chat-layout">
+        {/* Izquierda */}
+        <div className="pulse-avatar">
+          <img src="/pulse/pulse-neutral-coffee-4k.png" alt="Pulse pensando con café" loading="eager"/>
+          <div className="bubble">{mem?.name ? `Pensando en ${mem.name}…` : "Estoy pensando tu mejor versión…"}</div>
+        </div>
+
+        {/* Centro */}
+        <section className="chat-panel" aria-label="Chat con Pulse">
+          <h1>Chat con Pulse</h1>
+          <div className="messages" ref={listRef} role="log" aria-live="polite" aria-relevant="additions text">
+            {(mounted ? messages : [defaultWelcome]).map((m,i)=>(
+              <div key={i}
+                className={m.role==="pulse"?"chat-bubble-pulse":m.role==="user"?"chat-bubble-user":"chat-bubble-pulse"}
+                style={m.role==="user"?{marginLeft:"auto"}:undefined}
+                dangerouslySetInnerHTML={{__html:m.text.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/`(.+?)`/g,"<code>$1</code>")}}
+              />
+            ))}
+            {typing && <div className="chat-bubble-pulse">Pensando…</div>}
+          </div>
+
+          <div className="input-row">
+            <input
+              className="chat-input"
+              placeholder="Cuéntame tu idea. Yo diseño antes de que se te enfríe el café… ☕⚡  (Enter para enviar, Shift+Enter para línea)"
+              value={idea} onChange={(e)=>setIdea(e.target.value)} onKeyDown={onEnter} aria-label="Escribe tu idea"
+            />
+            <button className="chat-button" onClick={send} disabled={!idea.trim()}>Enviar</button>
+          </div>
+        </section>
+
+        {/* Derecha */}
+        <aside className="generator-card" aria-label="Generador en vivo">
+          <h2>Generador en vivo ☕⚡</h2>
+          <div className="chips-grid">
+            {chips.map((chip,idx)=>(
+              <button key={idx} className="chip-button"
+                onClick={()=>onChip(idx)}
+                aria-pressed={activeChip===idx}
+                data-active={activeChip===idx?"true":"false"}
+                title={chip.text}
+              >
+                <span className="chip-emoji">{chip.icon}</span>
+                <span>{chip.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="preview-box" aria-label="Preview en vivo">
+            <span className="opacity-80">
+              {previewText(mem.goal||"desconocido", mem)}
+            </span>
+          </div>
+        </aside>
+      </div>
+    </>
+  );
+}

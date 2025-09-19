@@ -1,0 +1,66 @@
+/* ✨ Pulse Chat · Ajuste -6 (Pulse protagonista pero equilibrado) */
+:root{
+  --avatar: 700px;   /* antes 1200px → ahora -6 pasos */
+  --bubble-fs: 16px;
+  --panelR-w: 300px;
+  --input-h: 46px;
+}
+
+/* Layout */
+.chat-layout{
+  display:flex; gap:24px; min-height:100vh; padding:24px;
+  background:linear-gradient(180deg,#06080f 0%,#000 100%);
+}
+
+/* Pulse a la izquierda */
+.pulse-avatar{
+  flex:0 0 var(--avatar);
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+  margin-bottom:40px;
+}
+.pulse-avatar img{
+  width:var(--avatar); height:auto; object-fit:contain;
+  filter:drop-shadow(0 0 50px rgba(56,189,248,.55));
+  animation:pulse-glow 3s infinite alternate;
+}
+@keyframes pulse-glow{
+  from{filter:drop-shadow(0 0 30px rgba(56,189,248,.35));}
+  to{filter:drop-shadow(0 0 70px rgba(56,189,248,.65));}
+}
+.pulse-avatar .bubble{
+  margin-top:12px; font-size:var(--bubble-fs); font-weight:600;
+  background:rgba(0,0,0,.6); border:1px solid rgba(255,255,255,.25);
+  color:#F8FAFC; padding:10px 14px; border-radius:14px;
+  backdrop-filter:blur(8px); box-shadow:0 4px 12px rgba(0,0,0,.45);
+}
+
+/* Chat panel */
+.chat-panel{
+  flex:1; display:flex; flex-direction:column; padding:18px; border-radius:14px;
+  background:rgba(12,14,20,.82); border:1px solid rgba(255,255,255,.1); backdrop-filter:blur(12px);
+  box-shadow:0 0 20px rgba(56,189,248,.15);
+}
+.chat-panel h1{font-size:17px;font-weight:800;margin:0 0 12px;}
+.chat-bubble-pulse,.chat-bubble-user{border-radius:14px;padding:12px;margin-bottom:12px;max-width:80%;}
+.chat-bubble-pulse{color:#fff;background:rgba(56,189,248,.15);border:1px solid #38BDF8;}
+.chat-bubble-user{color:#F8FAFC;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);}
+
+/* Input */
+.chat-input{
+  width:100%;height:var(--input-h);padding:0 16px;border-radius:14px;
+  background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2);
+}
+.chat-input::placeholder{color:#a0a7b3;}
+.chat-button{
+  height:var(--input-h);padding:0 18px;border:none;border-radius:14px;
+  background:linear-gradient(90deg,#FFD700,#FF9F45);color:#fff;font-weight:800;
+}
+
+/* Panel derecho */
+.generator-card{
+  width:var(--panelR-w);padding:16px;border-radius:14px;
+  background:rgba(10,10,20,.9);border:1px solid rgba(255,255,255,.1);
+}
+.chips-grid{display:grid;gap:10px;}
+.chip-button{height:36px;border-radius:9999px;font-size:13px;}
+.preview-box{margin-top:12px;min-height:220px;background:rgba(5,8,15,.92);border-radius:14px;}

@@ -1,0 +1,62 @@
+import React from "react";
+import Head from "next/head";
+import "@/styles/pulse-chat.css";
+
+export default function ChatPage() {
+  return (
+    <>
+      <Head>
+        <title>Chat con Pulse ☕⚡</title>
+      </Head>
+      <div className="min-h-screen bg-black text-white flex flex-col md:flex-row gap-6 p-6">
+        {/* Panel izquierdo: Chat */}
+        <div className="chat-panel flex-1 flex flex-col">
+          <h1 className="text-xl font-bold mb-4">Chat con Pulse</h1>
+          <div className="flex-1 overflow-y-auto">
+            <div className="chat-bubble-pulse">
+              Estoy contigo. Háblame de tu web o negocio. 
+              ¿Qué te gustaría lograr primero: <b>ventas</b>, <b>reservas</b> o <b>leads</b>? ☕⚡
+            </div>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <input
+              className="chat-input flex-1"
+              placeholder="Cuéntame tu idea. Yo diseño antes de que se te enfríe el café… ☕⚡"
+            />
+            <button className="chat-button">Enviar</button>
+          </div>
+        </div>
+
+        {/* Panel derecho: Generador */}
+        <div className="generator-card w-full md:w-96">
+          <h2 className="text-lg font-bold mb-2">Generador en vivo ☕⚡</h2>
+          <div className="flex gap-2 mb-4">
+            <span className="px-3 py-1 rounded-xl bg-white/10 border border-[#FFD700] text-sm cursor-pointer">v0.1</span>
+            <span className="px-3 py-1 rounded-xl bg-yellow-500/20 border border-[#FFD700] text-sm cursor-pointer">v0.2</span>
+          </div>
+
+          <input
+            className="chat-input mb-3"
+            placeholder="Ej: SaaS de facturas, cafetería…"
+          />
+          <select className="chat-input mb-3">
+            <option>Crystal Oro (premium)</option>
+            <option>Diamante 💎</option>
+            <option>Neutral Pro</option>
+          </select>
+          <select className="chat-input mb-3">
+            <option>Restaurante</option>
+            <option>E-commerce</option>
+            <option>Servicios</option>
+          </select>
+
+          <button className="chat-button w-full mb-4">Generar ZIP v0.2 ⚡</button>
+
+          <div className="preview-box">
+            <span className="opacity-80">Preview en vivo listo ☕…</span>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

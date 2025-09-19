@@ -1,0 +1,32 @@
+/**
+ * PulsePolicy: límites claros para mantener a Pulse en su carril (webs/negocios).
+ */
+export const ALLOWED_INTENTS = [
+  "web", "website", "landing", "portfolio", "ecommerce", "tienda", "carrito",
+  "hotel", "restaurante", "cafeteria", "abogado", "estudio", "evento",
+  "branding", "copy", "seo", "precio", "planes", "hosting", "editor", "cms"
+];
+
+export const BANNED_TOPICS = [
+  // No-tech / sensibles / ilegales / no-producto
+  /armas|drogas|hack|malware|phishing|crack|carding/i,
+  /medic(o|ina)|diagn[oó]stico|receta/i,
+  /finanzas personales|inversi[oó]n|trading|cripto consejo/i,
+  /pol[ií]tica partidista|propaganda|campaña electoral/i,
+  /contenido sexual|porno|nsfw/i,
+  /datos personales|dni|pasaporte|n[úu]mero de tarjeta/i,
+  /deepfake|reconocimiento facial/i
+];
+
+// Heurística rápida de fuera de ámbito
+export function isOffTopic(msg: string): boolean {
+  const t = (msg || "").toLowerCase();
+  // Si menciona explícitamente "web", "tienda", "landing", etc., damos aprobado directo
+  if (/(web|sitio|landing|tienda|e-?commerce|carrito|portfolio|portafolio|p[aá]gina)/i.test(t)) return false;
+  // Si coincide con algo prohibido -> off-topic
+  if (BANNED_TOPICS.some(r => r.test(t))) return true;
+  // Si no hay ninguna keyword típica de negocio y es demasiado corto/ambiguo, marcamos como offtopic leve
+  const hasBiz = /(cliente|venta|reserv(a|as)|menu|carta|abogado|hotel|restaurante|cafeter[ií]a|evento|marca|seo|branding|precio|planes)/i.test(t);
+  if (!hasBiz && t.split(/\s+/).length < 3) return true;
+  return false;
+}

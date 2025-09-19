@@ -1,0 +1,321 @@
+import { useEffect, useRef, useState } from "react";
+
+type Msg = { role: "user" | "assistant"; content: string };
+type Meta = { ms?: number; approx_cost_eur?: number } | null;
+
+const STORAGE_KEY = "pulse_chat_v1";
+
+export default function Chat() {
+  const [msgs, setMsgs] = useState<Msg[]>(
+    () =>
+      JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || [
+        {
+          role: "assistant",
+          content:
+            "Estoy contigo. Cuéntame tu idea de web/negocio como si estuviéramos tomando un café. ¿Qué quieres lograr primero: vender, reservas o leads? ☕⚡",
+        },
+      ]
+  );
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [meta, setMeta] = useState<Meta>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs));
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [msgs, loading]);
+
+  function softLimit(t: string) {
+    return t.trim().slice(0, 5000);
+  }
+
+  async function send() {
+    const text = softLimit(input);
+    if (!text || loading) return;
+
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const base = [...msgs, { role: "user" as const, content: text }];
+    setMsgs(base);
+    setInput("");
+    setLoading(true);
+    setMeta(null);
+    const started = Date.now();
+
+    try {
+      const res = await fetch("/api/pulse-stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          messages: base.map((m) => ({ role: m.role, content: m.content })),
+        }),
+      });
+
+      let acc = "";
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        acc += decoder.decode(value, { stream: true });
+        setMsgs([...base, { role: "assistant", content: acc }]);
+      }
+
+      const approx_cost = estimateClientCost(base, acc);
+      const elapsed = Date.now() - started;
+      setMeta({ ms: elapsed, approx_cost_eur: approx_cost });
+    } catch (e: any) {
+      if (e?.name === "AbortError") {
+        setMsgs([
+          ...base,
+          {
+            role: "assistant",
+            content:
+              "Corté la respuesta para priorizar tu último mensaje. Sigo contigo. ☕",
+          },
+        ]);
+      } else {
+        setMsgs([
+          ...base,
+          { role: "assistant", content: "Oops, falló la conexión. Reintentemos. ☕" },
+        ]);
+      }
+    } finally {
+      setLoading(false);
+      abortRef.current = null;
+    }
+  }
+
+  function estimateClientCost(history: Msg[], out: string) {
+    const perChar = 0.25; // ~tokens/char
+    const pin = Math.ceil(
+      history.map((m) => m.content.length).reduce((a, b) => a + b, 0) * perChar
+    );
+    const pout = Math.ceil((out || "").length * perChar);
+    const cost = (pin / 1000) * 0.003 + (pout / 1000) * 0.009;
+    return Number(cost.toFixed(4));
+  }
+
+  return (
+    <main className="chat-page">
+      <h1 className="chat-title">Chat con Pulse</h1>
+
+      <div className="chat-window" ref={scrollRef} aria-live="polite">
+        <div className="chat-container">
+          {msgs.map((m, i) => {
+            // Heurísticas visuales: marcamos preguntas y “susurros” por contenido
+            const isAssistant = m.role === "assistant";
+            const isQuestion =
+              isAssistant &&
+              /(\?|¿)/.test(m.content) &&
+              !/https?:\/\//i.test(m.content);
+            const isCliff =
+              isAssistant &&
+              /(¿Sigo|¿Paso|¿Afinamos|¿Lo sirvo|siguiente|sorbo)/i.test(m.content);
+
+            return (
+              <div
+                key={i}
+                className={[
+                  "chat-bubble",
+                  isAssistant ? "pulse" : "user",
+                  isQuestion ? "question" : "",
+                  isCliff ? "cliff" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                data-role={m.role}
+              >
+                <div className="bubble-content">{m.content}</div>
+              </div>
+            );
+          })}
+          {loading && (
+            <div className="chat-bubble pulse">
+              <div className="bubble-content">
+                Pensando tu mejor versión… ☕ (streaming en vivo)
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="composer">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey && input.trim() && !loading) {
+              e.preventDefault();
+              send();
+            }
+            if (e.key === "Escape" && abortRef.current) {
+              abortRef.current.abort();
+            }
+          }}
+          placeholder="Háblame como a un amigo, yo diseño tu web… (Shift+Enter salto de línea · Esc cancela)"
+          aria-label="Escribe tu idea"
+          className="composer-input"
+        />
+        <button
+          onClick={send}
+          disabled={!input.trim() || loading}
+          aria-busy={loading}
+          className="composer-btn"
+        >
+          {loading ? "Creando…" : "Enviar"}
+        </button>
+      </div>
+
+      <div className="kpi">
+        {meta ? (
+          <span>
+            Latencia: <strong>{meta.ms} ms</strong> · Coste≈{" "}
+            <strong>{(meta.approx_cost_eur || 0).toFixed(4)} €</strong> ·
+            Streaming activo
+          </span>
+        ) : (
+          <span>
+            Enter para enviar • Shift+Enter salto de línea • Esc para cancelar
+            respuesta
+          </span>
+        )}
+      </div>
+
+      {/* Estilos scopeados SOLO a /chat con styled-jsx (sin CSS global) */}
+      <style jsx global>{`
+        .chat-page {
+          min-height: 100vh;
+          background: #0a0a0a;
+          color: #f8fafc;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 24px;
+        }
+        .chat-title {
+          font-size: 28px;
+          font-weight: 800;
+          margin-bottom: 16px;
+          letter-spacing: 0.2px;
+          text-shadow: 0 0 18px rgba(56, 189, 248, 0.18);
+        }
+        .chat-window {
+          width: 100%;
+          max-width: 860px;
+          height: 64vh;
+          overflow-y: auto;
+          padding: 16px;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(56, 189, 248, 0.25);
+          border-radius: 16px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+        .chat-container {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial,
+            sans-serif;
+        }
+        .chat-bubble {
+          max-width: 72%;
+          padding: 12px 14px;
+          border-radius: 14px;
+          line-height: 1.6;
+          white-space: pre-wrap;
+        }
+        .chat-bubble.user {
+          align-self: flex-end;
+          background: rgba(255, 255, 255, 0.08);
+          color: #e5e7eb;
+          border: 1px solid rgba(255, 215, 0, 0.25);
+        }
+        .chat-bubble.pulse {
+          align-self: flex-start;
+          background: rgba(56, 189, 248, 0.1);
+          color: #f3f4f6;
+          border: 1px solid rgba(56, 189, 248, 0.28);
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+          border-left: 3px solid #38bdf8;
+        }
+        /* Jerarquía interior */
+        .bubble-content strong {
+          color: #ffd700;
+          font-weight: 700;
+        }
+        .bubble-content em {
+          font-style: italic;
+          color: #cbd5e1;
+        }
+        /* Preguntas (guía visual en cian) */
+        .chat-bubble.pulse.question .bubble-content {
+          color: #38bdf8;
+          font-weight: 500;
+        }
+        /* Cliffhangers (susurro) */
+        .chat-bubble.pulse.cliff .bubble-content {
+          color: #9ca3af;
+          font-style: italic;
+        }
+        .composer {
+          display: flex;
+          gap: 10px;
+          width: 100%;
+          max-width: 860px;
+          margin-top: 14px;
+          align-items: center;
+        }
+        .composer-input {
+          flex: 1;
+          padding: 14px 16px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 215, 0, 0.45);
+          background: rgba(255, 255, 255, 0.06);
+          color: #f8fafc;
+          outline: none;
+          box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.12);
+        }
+        .composer-btn {
+          padding: 12px 18px;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 215, 0, 0.6);
+          background: linear-gradient(135deg, #ffd700, #ff9f45);
+          color: #0a0a0a;
+          font-weight: 800;
+          cursor: pointer;
+        }
+        .composer-btn[disabled] {
+          opacity: 0.7;
+          cursor: not-allowed;
+          transform: scale(0.98);
+        }
+        .kpi {
+          margin-top: 10px;
+          color: rgba(248, 250, 252, 0.7);
+          font-size: 12px;
+        }
+
+        /* Micro-separación para lectura ligera */
+        .chat-bubble + .chat-bubble {
+          margin-top: 6px;
+        }
+        .bubble-content p {
+          margin: 0 0 6px 0;
+        }
+        .bubble-content p:last-child {
+          margin-bottom: 0;
+        }
+      `}</style>
+    </main>
+  );
+}

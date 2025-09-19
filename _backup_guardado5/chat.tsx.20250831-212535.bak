@@ -1,0 +1,134 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import frases from "../locales/es/pulse-chat.json";
+import { frase } from "../lib/pulseBrain";
+
+type Msg = { who:"pulse"|"user", text:string, typing?:boolean };
+
+export default function ChatPulse() {
+  const [msgs, setMsgs] = useState<Msg[]>([
+    { who: "pulse", text: frase("entrada") }
+  ]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll
+  useEffect(()=>{ listRef.current?.scrollTo({top:999999, behavior:"smooth"}); }, [msgs.length]);
+
+  // Presencia: cuando el user escribe, Pulse "piensa" con sorbos
+  useEffect(()=>{
+    if (input.trim().length>0) {
+      // Añadimos / actualizamos una burbuja de typing visible
+      setMsgs(m=>{
+        // si ya hay typing, no apilar
+        if (m.some(x=>x.typing)) return m;
+        return [...m, { who:"pulse", text:"", typing:true }];
+      });
+    } else {
+      // quitar typing fantasma
+      setMsgs(m=>m.filter(x=>!x.typing));
+    }
+  }, [input]);
+
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text || sending) return;
+
+    // 1) push user
+    setMsgs(m=>[...m, { who:"user", text }]);
+    setInput("");
+    setSending(true);
+
+    // 2) mostrar "pensando"
+    setMsgs(m=>[...m.filter(x=>!x.typing), { who:"pulse", text:"__typing__", typing:true }]);
+
+    // 3) decidir modo LIVE/local via API route
+    try {
+      const r = await fetch("/api/pulse", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ message: text })
+      });
+      const data = await r.json();
+      const reply = (data?.text as string) || "Listo ☕⚡.";
+      // 4) reemplazar typing por respuesta real (con café)
+      setMsgs(m => {
+        const withoutTyping = m.filter(x=>x.text!=="__typing__" && !x.typing);
+        return [...withoutTyping, { who:"pulse", text: reply }];
+      });
+    } catch {
+      // fallback ultra corto
+      setMsgs(m=>[...m.filter(x=>x.text!=="__typing__" && !x.typing), { who:"pulse", text: frase("error") }]);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const onKey = (e: React.KeyboardEvent<HTMLInputElement>)=>{
+    if (e.key==="Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const placeholder = "Ej: quiero una web para mi cafetería ☕ con carta y WhatsApp";
+  return (
+    <div style={{minHeight:"100svh", padding:"24px", display:"grid", placeItems:"center", background:"radial-gradient(1200px 600px at 20% 0%, rgba(56,189,248,.08), transparent), #000"}} aria-live="polite">
+      <div style={{width:"min(1100px, 96vw)", padding:"20px", borderRadius:20, background:"linear-gradient(180deg, rgba(4,12,24,.8), rgba(2,8,20,.6))", border:"1px solid rgba(56,189,248,.18)", boxShadow:"0 16px 60px rgba(0,0,0,.55)"}}>
+        <h1 style={{color:"#E6F6FF", fontSize:28, fontWeight:800, letterSpacing:.3, margin:"4px 8px 18px"}}>Chat con Pulse</h1>
+
+        <div ref={listRef} style={{maxHeight:"60svh", overflowY:"auto", padding:"8px 12px 16px", display:"grid", gap:12}}>
+          {msgs.map((m, i)=>(
+            <div key={i} className={m.who==="pulse" ? "bubble-pulse" : "bubble-user"} style={{maxWidth:"68ch", justifySelf: m.who==="pulse" ? "start" : "end"}}>
+              {m.typing ? (
+                <span className="pulse-typing" aria-label="Pulse está escribiendo">
+                  <span className="dot" /><span className="dot" /><span className="dot" />
+                  <span style={{marginLeft:10, opacity:.85}}>Pensando… {frase("pensando")}</span>
+                </span>
+              ) : (
+                <span>{m.text}</span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div style={{display:"flex", gap:10, marginTop:16}}>
+          <input
+            aria-label="Escribe tu idea"
+            value={input}
+            onChange={e=>setInput(e.target.value)}
+            onKeyDown={onKey}
+            placeholder={placeholder}
+            style={{
+              flex:1, padding:"14px 16px", borderRadius:14,
+              border:"1px solid rgba(251,191,36,.45)",
+              background:"rgba(255,255,255,.04)", color:"#E5F6FF",
+              outline:"none", boxShadow:"0 0 0 0 rgba(56,189,248,0)",
+            }}
+            onFocus={(e)=>{e.currentTarget.style.boxShadow="0 0 0 4px rgba(56,189,248,.18)";}}
+            onBlur={(e)=>{e.currentTarget.style.boxShadow="0 0 0 0 rgba(56,189,248,0)";}}
+          />
+          <button
+            onClick={handleSend}
+            disabled={sending}
+            style={{
+              minWidth:120, padding:"12px 16px", borderRadius:14,
+              border:"1px solid #FFD700", color:"white", fontWeight:800,
+              background:"linear-gradient(180deg,#FFB648,#FF9F45)",
+              boxShadow:"0 10px 30px rgba(255,159,69,.35), 0 0 28px rgba(61,255,115,.0)",
+              opacity: sending ? .6 : 1, transform: sending ? "scale(.98)" : "scale(1)",
+              transition:"transform .12s ease"
+            }}
+            aria-busy={sending}
+          >
+            {sending ? "Sirviendo ☕…" : "Enviar"}
+          </button>
+        </div>
+
+        <p style={{margin:"10px 2px 0", color:"#9CCEEB", fontSize:12, opacity:.8}}>
+          Enter para enviar • Shift+Enter salto de línea • “Tu web antes de que se te enfríe el café ☕⚡”
+        </p>
+      </div>
+    </div>
+  );
+}

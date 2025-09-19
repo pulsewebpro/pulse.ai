@@ -1,0 +1,129 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import OpenAI from "openai";
+import { PULSE_SYSTEM_PROMPT } from "@/lib/pulse-persona";
+import { assertEnv } from "@/lib/env";
+import { trimHistory, sanitizeMessageContent } from "@/lib/chat-helpers";
+import { estimateCostEUR } from "@/lib/metrics";
+
+type Msg = { role: "system" | "user" | "assistant"; content: string };
+
+const BUCKET = new Map<string, { count: number; reset: number }>();
+const WINDOW_MS = 15_000;
+const LIMIT = 6;
+
+function allowed(ip: string) {
+  const now = Date.now();
+  const e = BUCKET.get(ip);
+  if (!e || now > e.reset) {
+    BUCKET.set(ip, { count: 1, reset: now + WINDOW_MS });
+    return true;
+  }
+  if (e.count < LIMIT) {
+    e.count += 1;
+    return true;
+  }
+  return false;
+}
+
+const banned = [
+  "depresión","diagnóstico","medicina","política","religión","guerra","suicidio",
+  "trading","cripto","hacking","piratería","armas","drogas","apuestas","tarea escolar"
+];
+
+function outsideScope(txt: string) {
+  const t = (txt || "").toLowerCase();
+  return banned.some(b => t.includes(b));
+}
+
+async function callOpenAI(client: OpenAI, model: string, messages: Msg[]) {
+  // Hasta 2 reintentos con backoff exponencial
+  let lastErr: any;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const completion = await client.chat.completions.create({
+        model,
+        temperature: 0.7,
+        max_tokens: 620,
+        messages
+      });
+      return completion;
+    } catch (e: any) {
+      lastErr = e;
+      const delay = 250 * Math.pow(2, attempt);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  throw lastErr;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const ip =
+    (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+    req.socket.remoteAddress ||
+    "0.0.0.0";
+  if (!allowed(ip)) {
+    return res.status(429).json({ ok: false, error: "Demasiadas peticiones. Dame un sorbo ☕ y sigo." });
+  }
+
+  try {
+    assertEnv();
+    const started = Date.now();
+    const model = process.env.PULSE_OPENAI_MODEL || "gpt-4o-mini";
+
+    // Sanitizar entrada
+    const input = req.body ?? {};
+    let messages: Msg[] = Array.isArray(input.messages) ? input.messages : [];
+    messages = messages
+      .filter((m) => m && (m.role === "user" || m.role === "assistant" || m.role === "system"))
+      .map((m) => ({ role: m.role, content: sanitizeMessageContent(String(m.content ?? "")) }))
+      .slice(-40); // cap de 40 turnos
+
+    const context = trimHistory(messages, 2200);
+    const lastUser = [...context].reverse().find((m) => m.role === "user");
+
+    const redirectionHint =
+      lastUser?.content && outsideScope(lastUser.content)
+        ? [{
+            role: "assistant" as const,
+            content:
+              "Puedo ayudarte si lo orientamos a tu **web o negocio**. Por ejemplo, convertir ese tema en una sección (blog, recursos, landing) con enfoque responsable. ¿Te parece? ☕"
+          }]
+        : [];
+
+    const systemMsg = { role: "system" as const, content: PULSE_SYSTEM_PROMPT };
+
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const completion = await callOpenAI(client, model, [systemMsg, ...redirectionHint, ...context]);
+
+    const msg = completion.choices?.[0]?.message?.content ?? "…";
+    const usage = completion.usage || null;
+    const elapsed = Date.now() - started;
+
+    const costEUR = estimateCostEUR(usage);
+
+    console.log(JSON.stringify({
+      tag: "pulse_api",
+      ip, model, ms: elapsed,
+      usage,
+      cost_eur: costEUR
+    }));
+
+    res.status(200).json({
+      ok: true,
+      content: msg,
+      meta: {
+        ms: elapsed,
+        usage,
+        cost_eur: costEUR
+      }
+    });
+  } catch (err: any) {
+    console.error("Pulse API error:", err?.message || err);
+    res.status(500).json({
+      ok: false,
+      error: "Oops, casi derramo el café. Fallo temporal. Reintentemos. ☕"
+    });
+  }
+}

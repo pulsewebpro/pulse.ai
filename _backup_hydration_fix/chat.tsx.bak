@@ -1,0 +1,378 @@
+import React, { useEffect, useRef, useState } from "react";
+import Head from "next/head";
+import { pulseBrand, quips, planFromGoal, PulseGoal } from "@/lib/pulse/persona";
+import { loadMemory, saveMemory, loadLog, saveLog, Msg } from "@/lib/pulse/memory";
+
+/** Intenciones (chips) */
+const chips: { icon: string; label: string; goal: PulseGoal; text: string }[] = [
+  { icon:"☕", label:"VENTAS", goal:"ventas", text:"Quiero poner mis productos online rápido." },
+  { icon:"📅", label:"GENERADOR RESERVAS", goal:"reservas", text:"Necesito que reserven mesa/cita sin llamar." },
+  { icon:"⚡", label:"Captar clientes", goal:"leads", text:"Soy agencia/consultor y quiero leads premium." },
+  { icon:"🎉", label:"CARTEL PARA EVENTO", goal:"evento", text:"Tengo concierto/gala/fiesta y necesito web YA." },
+  { icon:"🌐", label:"Portfolio creativo", goal:"portfolio", text:"Soy fotógrafo, artista, diseñador o dev freelance." },
+  { icon:"💎", label:"Marca premium", goal:"premium", text:"Quiero lujo, alto valor, estilo Tesla." },
+  { icon:"🏪", label:"Negocio local", goal:"local", text:"Tienda física, gym, peluquería: quiero presencia digital." },
+  { icon:"✍️", label:"Blog / Contenido", goal:"blog", text:"Para escritores, periodistas, community managers." },
+  { icon:"🎥", label:"Influencer / Creador", goal:"influencer", text:"Soy tiktoker/streamer y quiero centralizar mis links/brand." },
+  { icon:"🌱", label:"Proyecto social", goal:"social", text:"ONG, comunidad, activismo." },
+];
+
+/** Detecciones rápidas */
+const detectName = (t:string) => t.match(/\b(me llamo|mi nombre es)\s+([A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)\b/i)?.[2];
+const detectGoal = (t:string):PulseGoal => {
+  const s=t.toLowerCase();
+  if(/venta|tienda|checkout|producto/.test(s)) return "ventas";
+  if(/reserva|cita|booking|mesa/.test(s)) return "reservas";
+  if(/lead|captar|prospecto|formulario/.test(s)) return "leads";
+  if(/portfolio|portafolio|proyecto|trabajo/.test(s)) return "portfolio";
+  if(/premium|lujo|tesla|exclusiv/.test(s)) return "premium";
+  if(/local|peluquer|gimnasio|mapa|horario|barrio/.test(s)) return "local";
+  if(/blog|contenido|newsletter|artícul/.test(s)) return "blog";
+  if(/influencer|tiktok|youtube|twitch|instagram|links?/.test(s)) return "influencer";
+  if(/social|ong|comunidad|activismo/.test(s)) return "social";
+  if(/evento|concierto|gala|fiesta|entradas?/.test(s)) return "evento";
+  return "desconocido";
+};
+
+/** Flujo de preguntas por intención: hablamos natural, capturando datos útiles */
+type QKey =
+  | "ventas.tipoProductos" | "ventas.pagos"
+  | "reservas.negocio" | "reservas.horarios"
+  | "leads.publico" | "leads.oferta"
+  | "portfolio.disciplina" | "portfolio.casos"
+  | "premium.adjetivos" | "premium.referencias"
+  | "local.ciudad" | "local.servicios"
+  | "blog.temas" | "blog.frecuencia"
+  | "influencer.plataformas" | "influencer.monetizacion"
+  | "social.mision" | "social.llamada"
+  | "evento.fecha" | "evento.lugar";
+
+type FollowUp = { key: QKey; ask: (name?:string)=>string; save: (mem:any, answer:string)=>void };
+
+const askFlows: Record<PulseGoal, FollowUp[]> = {
+  ventas: [
+    {
+      key:"ventas.tipoProductos",
+      ask:(n)=>`Perfecto ${n?`${n}`:""}, ventas 💎. ¿Qué vendes exactamente? (ej: camisetas, cursos, software)`,
+      save:(m,a)=>{ m.sector = (m.sector||"").toString(); m.products = a; }
+    },
+    {
+      key:"ventas.pagos",
+      ask:()=>`¿Cómo quieres cobrar? (Stripe, PayPal, transferencia) y ¿envíos o solo digital?`,
+      save:(m,a)=>{ m.payments = a; }
+    },
+  ],
+  reservas: [
+    {
+      key:"reservas.negocio",
+      ask:(n)=>`Reservas 📅. ¿De qué negocio hablamos, ${n||""}? (restaurante, clínica, barbería…)`,
+      save:(m,a)=>{ m.sector = a; }
+    },
+    {
+      key:"reservas.horarios",
+      ask:()=>`¿Horarios de atención y días? Así preparo el picker con bloqueos y WhatsApp.`,
+      save:(m,a)=>{ m.hours = a; }
+    },
+  ],
+  leads: [
+    {
+      key:"leads.publico",
+      ask:()=>`Leads ⚡. ¿Cuál es tu público objetivo? (ej: pymes tech en España)`,
+      save:(m,a)=>{ m.audience = a; }
+    },
+    {
+      key:"leads.oferta",
+      ask:()=>`¿Qué oferta/servicio clave empujamos? (auditoría, mentoring, paquete mensual…)`,
+      save:(m,a)=>{ m.offer = a; }
+    },
+  ],
+  portfolio: [
+    {
+      key:"portfolio.disciplina",
+      ask:()=>`Portfolio 🌐. ¿Cuál es tu disciplina principal? (foto, diseño, dev, arte…)`,
+      save:(m,a)=>{ m.discipline = a; }
+    },
+    {
+      key:"portfolio.casos",
+      ask:()=>`¿Tienes 2–3 proyectos estrella que quieras destacar? Dime nombres o descripciones cortas.`,
+      save:(m,a)=>{ m.cases = a; }
+    },
+  ],
+  premium: [
+    {
+      key:"premium.adjetivos",
+      ask:()=>`Marca premium 💎. Dame 3 adjetivos de tu marca (ej: minimal, serio, high-tech).`,
+      save:(m,a)=>{ m.brandWords = a; }
+    },
+    {
+      key:"premium.referencias",
+      ask:()=>`¿Referencias visuales? (Tesla, Apple, Dior…). Así clavo el tono.`,
+      save:(m,a)=>{ m.refs = a; }
+    },
+  ],
+  local: [
+    {
+      key:"local.ciudad",
+      ask:()=>`Negocio local 🏪. ¿En qué ciudad/barrio estás? Lo uso para mapa y SEO local.`,
+      save:(m,a)=>{ m.city = a; }
+    },
+    {
+      key:"local.servicios",
+      ask:()=>`¿Servicios principales y precios aproximados? Haré un catálogo simple.`,
+      save:(m,a)=>{ m.services = a; }
+    },
+  ],
+  blog: [
+    {
+      key:"blog.temas",
+      ask:()=>`Blog ✍️. ¿Temas principales? (ej: producto, diseño, marketing)`,
+      save:(m,a)=>{ m.topics = a; }
+    },
+    {
+      key:"blog.frecuencia",
+      ask:()=>`¿Frecuencia ideal? (semanal, quincenal) y ¿quieres newsletter?`,
+      save:(m,a)=>{ m.frequency = a; }
+    },
+  ],
+  influencer: [
+    {
+      key:"influencer.plataformas",
+      ask:()=>`Influencer 🎥. ¿En qué canales te mueves? (TikTok, Instagram, YouTube, Twitch…)`,
+      save:(m,a)=>{ m.platforms = a; }
+    },
+    {
+      key:"influencer.monetizacion",
+      ask:()=>`¿Monetización? (afiliados, cursos, suscripción, merch). Te preparo la “vitrina”.`,
+      save:(m,a)=>{ m.monetization = a; }
+    },
+  ],
+  social: [
+    {
+      key:"social.mision",
+      ask:()=>`Proyecto social 🌱. ¿Cuál es la misión en una frase? (clara y humana)`,
+      save:(m,a)=>{ m.mission = a; }
+    },
+    {
+      key:"social.llamada",
+      ask:()=>`¿Qué llamada a la acción priorizamos? (donar, unirse, voluntariado)`,
+      save:(m,a)=>{ m.cta = a; }
+    },
+  ],
+  evento: [
+    {
+      key:"evento.fecha",
+      ask:()=>`Evento 🎉. ¿Fecha y hora? Pongo contador y agenda.`,
+      save:(m,a)=>{ m.date = a; }
+    },
+    {
+      key:"evento.lugar",
+      ask:()=>`¿Lugar/ciudad? y ¿venta de entradas o registro gratuito?`,
+      save:(m,a)=>{ m.venue = a; }
+    },
+  ],
+  desconocido: [],
+};
+
+/** Vista previa contextual (texto) */
+const previewText = (goal: PulseGoal, m:any) => {
+  const base = `Preview en vivo · foco: ${goal !== "desconocido" ? goal : "descubrir"} · ${pulseBrand.claim}`;
+  switch(goal){
+    case "influencer": return `Preview · Hub de creador: bio + links + tienda (${m.platforms||"plataformas por definir"})`;
+    case "reservas": return `Preview · Reservas: agenda + WhatsApp (${m.sector||"negocio"})`;
+    case "ventas": return `Preview · Tienda: hero + grid + 1-click (${m.products||"productos"})`;
+    case "leads": return `Preview · Leads: formulario 3 pasos (${m.audience||"audiencia"})`;
+    case "portfolio": return `Preview · Portfolio: grid proyectos (${m.discipline||"disciplina"})`;
+    case "premium": return `Preview · Marca premium: minimal Tesla (${m.brandWords||"adjetivos"})`;
+    case "local": return `Preview · Local: mapa + horarios (${m.city||"ciudad"})`;
+    case "blog": return `Preview · Blog: feed + newsletter (${m.topics||"temas"})`;
+    case "social": return `Preview · ONG: misión + donaciones (${m.mission||"misión"})`;
+    case "evento": return `Preview · Evento: cartel + contador (${m.date||"fecha"})`;
+    default: return base;
+  }
+};
+
+export default function ChatPage(){
+  const [mem,setMem]=useState(()=>loadMemory());
+  const [messages,setMessages]=useState<Msg[]>(()=>{
+    const prev=loadLog();
+    if(prev.length) return prev;
+    return [{
+      role:"pulse",
+      text:`Estoy contigo. Háblame de tu web o negocio. ¿Qué te gustaría lograr primero: **ventas**, **reservas** o **leads**? ${pulseBrand.claim}`,
+      ts:Date.now()
+    }];
+  });
+  const [idea,setIdea]=useState("");
+  const [activeChip,setActiveChip]=useState<number|null>(null);
+  const [typing,setTyping]=useState(false);
+  const [humorTick,setHumorTick]=useState(0); // controla frecuencia de chistes
+  const [queue,setQueue]=useState<FollowUp[]>([]); // preguntas pendientes
+  const listRef=useRef<HTMLDivElement>(null);
+
+  useEffect(()=>{ saveMemory(mem); },[mem]);
+  useEffect(()=>{ saveLog(messages); },[messages]);
+  useEffect(()=>{ listRef.current?.scrollTo({top:listRef.current.scrollHeight,behavior:"smooth"}); },[messages.length,typing]);
+
+  /** Helpers de respuesta */
+  const pushPulse = (text:string)=> setMessages(m=>[...m,{role:"pulse",text,ts:Date.now()}]);
+  const pushUser  = (text:string)=> setMessages(m=>[...m,{role:"user", text,ts:Date.now()}]);
+
+  const maybeQuip = () => {
+    const next = humorTick+1;
+    setHumorTick(next);
+    if(mem.jokesOn && next % 3 === 0) return `\n\n> ${quips[Math.floor(Math.random()*quips.length)]}`;
+    return "";
+  };
+
+  /** Responder entendiendo intención + siguiente pregunta natural */
+  const respond = async (userText:string, hint?:PulseGoal) => {
+    const name = detectName(userText);
+    const goal = hint ?? detectGoal(userText);
+    setMem(m=>{
+      const n={...m};
+      if(name) n.name = name[0].toUpperCase()+name.slice(1);
+      if(goal && goal!=="desconocido") n.goal = goal;
+      n.lastIdea = userText;
+      return n;
+    });
+
+    setTyping(true);
+    await new Promise(r=>setTimeout(r, 380+Math.random()*420));
+
+    // Si tenemos preguntas en cola, seguimos con la próxima
+    if(queue.length>0){
+      const [, ...rest] = queue;
+      setQueue(rest);
+      const salute = name ? `Encantado, **${name[0].toUpperCase()+name.slice(1)}**.` : "";
+      const nxt = rest[0];
+      const q  = nxt ? nxt.ask(mem.name) : null;
+      pushPulse(`${salute} ¡Genial! Tomo nota. ${q ? q : planFromGoal(goal||mem.goal||"desconocido", mem.name, mem.jokesOn) + maybeQuip()}`);
+      setTyping(false);
+      return;
+    }
+
+    // Si no hay cola, abrimos conversación con 1ª pregunta del flujo del goal
+    const flow = askFlows[goal||"desconocido"];
+    if(flow && flow.length){
+      setQueue(flow.slice(1)); // dejamos el resto
+      const first = flow[0];
+      const open  = planFromGoal(goal||"desconocido", mem.name, false);
+      pushPulse(`${open}\n${first.ask(mem.name)}`);
+    }else{
+      // goal desconocido o sin preguntas → plan directo
+      pushPulse(`${planFromGoal(goal||mem.goal||"desconocido", mem.name, mem.jokesOn)}${maybeQuip()}`);
+    }
+    setTyping(false);
+  };
+
+  /** Enviar input usuario */
+  const send = async ()=>{
+    const text=idea.trim();
+    if(!text) return;
+    pushUser(text);
+    setIdea("");
+
+    // si hay una pregunta en curso, guardar y seguir
+    if(queue.length>=0){
+      const currentFlowByGoal = askFlows[mem.goal || "desconocido"];
+      const currentKey = currentFlowByGoal?.find(fu => fu.key === queue[0]?.key) ? queue[0]?.key : undefined;
+
+      if(currentKey){
+        const cur = queue[0]!;
+        setMem(m=>{ const n:any={...m}; cur.save(n,text); return n; });
+      }else if(currentFlowByGoal && currentFlowByGoal.length>0 && !queue.length){
+        // Si el flujo empezó (por chip) y estamos respondiendo a la primera pregunta
+        const first = currentFlowByGoal[0];
+        setMem(m=>{ const n:any={...m}; first.save(n,text); return n; });
+      }
+    }
+
+    await respond(text);
+  };
+
+  const onEnter=async(e:React.KeyboardEvent<HTMLInputElement>)=>{
+    if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); await send(); }
+  };
+
+  /** Al pulsar un chip: reconoce intención y dispara 1ª pregunta contextual */
+  const onChip=async(idx:number)=>{
+    const pick=chips[idx];
+    setActiveChip(idx);
+    setIdea(pick.text);
+    pushPulse(`Entendido: **${pick.label}**. Vamos a por ello.`);
+    // set goal immediately and seed queue with full flow
+    const flow = askFlows[pick.goal] || [];
+    setMem(m=>({ ...m, goal: pick.goal }));
+    if(flow.length){
+      setQueue(flow.slice(1)); // guardamos resto
+      pushPulse(flow[0].ask(mem.name));
+    }else{
+      await respond(pick.text, pick.goal);
+    }
+  };
+
+  return (
+    <>
+      <Head>
+        <title>Chat con Pulse ☕⚡</title>
+        <meta name="description" content={pulseBrand.claim} />
+      </Head>
+
+      <div className="chat-layout">
+        {/* Izquierda: Pulse */}
+        <div className="pulse-avatar">
+          <img src="/pulse/pulse-neutral-coffee-4k.png" alt="Pulse pensando con café" loading="eager"/>
+          <div className="bubble">{mem.name ? `Pensando en ${mem.name}…` : "Estoy pensando tu mejor versión…"}</div>
+        </div>
+
+        {/* Centro: Chat */}
+        <section className="chat-panel" aria-label="Chat con Pulse">
+          <h1>Chat con Pulse</h1>
+
+          <div className="messages" ref={listRef} role="log" aria-live="polite" aria-relevant="additions text">
+            {messages.map((m,i)=>(
+              <div key={i}
+                className={m.role==="pulse"?"chat-bubble-pulse":m.role==="user"?"chat-bubble-user":"chat-bubble-pulse"}
+                style={m.role==="user"?{marginLeft:"auto"}:undefined}
+                dangerouslySetInnerHTML={{__html:m.text.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/`(.+?)`/g,"<code>$1</code>")}}
+              />
+            ))}
+            {typing && <div className="chat-bubble-pulse">Pensando…</div>}
+          </div>
+
+          <div className="input-row">
+            <input
+              className="chat-input"
+              placeholder="Cuéntame tu idea. Yo diseño antes de que se te enfríe el café… ☕⚡  (Enter para enviar, Shift+Enter para línea)"
+              value={idea} onChange={e=>setIdea(e.target.value)} onKeyDown={onEnter} aria-label="Escribe tu idea"
+            />
+            <button className="chat-button" onClick={send} disabled={!idea.trim()}>Enviar</button>
+          </div>
+        </section>
+
+        {/* Derecha: Generador */}
+        <aside className="generator-card" aria-label="Generador en vivo">
+          <h2>Generador en vivo ☕⚡</h2>
+          <div className="chips-grid">
+            {chips.map((chip,idx)=>(
+              <button key={idx} className="chip-button"
+                onClick={()=>onChip(idx)}
+                aria-pressed={activeChip===idx}
+                data-active={activeChip===idx?"true":"false"}
+                title={chip.text}
+              >
+                <span className="chip-emoji">{chip.icon}</span>
+                <span>{chip.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="preview-box" aria-label="Preview en vivo">
+            <span className="opacity-80">
+              {previewText(mem.goal||"desconocido", mem as any)}
+            </span>
+          </div>
+        </aside>
+      </div>
+    </>
+  );
+}

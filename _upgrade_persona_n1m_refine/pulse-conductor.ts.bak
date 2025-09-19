@@ -1,0 +1,38 @@
+import type { ChatMsg } from "./chat-helpers";
+
+export function getPhaseInstruction(history: ChatMsg[], maxLines: number) {
+  const assistantTurns = history.filter(m => m.role === "assistant").length;
+
+  const BASE = `
+REGLAS DURAS:
+- Máximo ${maxLines} líneas.
+- Divide en 2 bloques cortos.
+- Prohibido usar listas o markdown con numeración.
+- UNA idea a la vez.
+- Siempre A/B choices.
+- Pausa y pide confirmación cada 2 turnos.
+`;
+
+  if (assistantTurns <= 1) {
+    return BASE + `
+FASE 1 (inicio):
+- Haz reflejo y pregunta A/B de dirección.
+- Da UNA micro-entrega (ej. titular breve).
+- Cliffhanger suave: invita a elegir.
+`;
+  }
+  if (assistantTurns === 2) {
+    return BASE + `
+FASE 2 (primer ladrillo):
+- Usa palabras del usuario.
+- Propón UNA pieza (ej. Hero o primera sección).
+- Pregunta: ¿prefiere esta o variante B?
+`;
+  }
+  return BASE + `
+FASE PROGRESIVA:
+- Avanza ficha a ficha, con A/B en cada paso.
+- Pausa cada 2 turnos para confirmar.
+- Nunca estructures toda la web de golpe.
+`;
+}

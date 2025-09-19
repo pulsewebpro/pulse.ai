@@ -1,0 +1,137 @@
+import React, { useEffect, useRef, useState } from "react";
+import Head from "next/head";
+import { pulseBrand } from "@/lib/pulse/persona";
+import { loadMemory, saveMemory, loadLog, saveLog, Msg } from "@/lib/pulse/memory";
+import { getPulseResponse, PulseIntent } from "@/lib/pulse/pulse-playbook";
+
+const chips: { icon: string; label: string; goal: PulseIntent; text: string }[] = [
+  { icon:"☕", label:"VENTAS", goal:"ventas", text:"Quiero poner mis productos online rápido." },
+  { icon:"📅", label:"GENERADOR RESERVAS", goal:"reservas", text:"Necesito que reserven mesa/cita sin llamar." },
+  { icon:"✍️", label:"Blog / Contenido", goal:"blog", text:"Para escritores, periodistas, community managers." },
+  { icon:"🎥", label:"Influencer / Creador", goal:"influencer", text:"Soy tiktoker/streamer y quiero centralizar mis links/brand." },
+  { icon:"🌱", label:"Proyecto social", goal:"proyecto", text:"ONG, comunidad, activismo." }
+];
+
+const detectIntent = (t:string):PulseIntent => {
+  const s=t.toLowerCase();
+  if(/venta|tienda|producto/.test(s)) return "ventas";
+  if(/reserva|cita|booking/.test(s)) return "reservas";
+  if(/blog|contenido|post/.test(s)) return "blog";
+  if(/influencer|tiktok|youtube|twitch|instagram/.test(s)) return "influencer";
+  if(/social|ong|comunidad|activismo/.test(s)) return "proyecto";
+  return "default";
+};
+
+export default function ChatPage(){
+  const [mem,setMem]=useState(loadMemory());
+  const [messages,setMessages]=useState<Msg[]>(()=>{
+    const prev=loadLog();
+    if(prev.length) return prev;
+    return [{
+      role:"pulse",
+      text:`Estoy contigo. Háblame de tu web o negocio. ${pulseBrand.claim}`,
+      ts:Date.now()
+    }];
+  });
+  const [idea,setIdea]=useState("");
+  const [activeChip,setActiveChip]=useState<number|null>(null);
+  const [typing,setTyping]=useState(false);
+  const [turn,setTurn]=useState(0);
+  const listRef=useRef<HTMLDivElement>(null);
+
+  useEffect(()=>{ saveMemory(mem); },[mem]);
+  useEffect(()=>{ saveLog(messages); },[messages]);
+  useEffect(()=>{ listRef.current?.scrollTo({top:listRef.current.scrollHeight,behavior:"smooth"}); },[messages.length,typing]);
+
+  const pushPulse = (text:string)=> setMessages(m=>[...m,{role:"pulse",text,ts:Date.now()}]);
+  const pushUser  = (text:string)=> setMessages(m=>[...m,{role:"user", text,ts:Date.now()}]);
+
+  const respond = async (userText:string, intent?:PulseIntent) => {
+    const goal = intent ?? detectIntent(userText);
+    setTyping(true);
+    await new Promise(r=>setTimeout(r, 350+Math.random()*400));
+    setTurn(t=>t+1);
+    const reply = getPulseResponse(goal, userText, turn);
+    pushPulse(reply);
+    setTyping(false);
+  };
+
+  const send = async ()=>{
+    const text=idea.trim();
+    if(!text) return;
+    pushUser(text);
+    setIdea("");
+    await respond(text);
+  };
+  const onEnter=async(e:React.KeyboardEvent<HTMLInputElement>)=>{
+    if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); await send(); }
+  };
+
+  const onChip=async(idx:number)=>{
+    const pick=chips[idx];
+    setActiveChip(idx);
+    setIdea(pick.text);
+    pushUser(pick.text);
+    await respond(pick.text, pick.goal);
+  };
+
+  return (
+    <>
+      <Head>
+        <title>Chat con Pulse ☕⚡</title>
+        <meta name="description" content={pulseBrand.claim} />
+      </Head>
+
+      <div className="chat-layout">
+        <div className="pulse-avatar">
+          <img src="/pulse/pulse-neutral-coffee-4k.png" alt="Pulse pensando" loading="eager"/>
+          <div className="bubble">{mem?.name ? `Pensando en ${mem.name}…` : "Estoy pensando tu mejor versión…"}</div>
+        </div>
+
+        <section className="chat-panel" aria-label="Chat con Pulse">
+          <h1>Chat con Pulse</h1>
+          <div className="messages" ref={listRef} role="log" aria-live="polite" aria-relevant="additions text">
+            {messages.map((m,i)=>(
+              <div key={i}
+                className={m.role==="pulse"?"chat-bubble-pulse":"chat-bubble-user"}
+                style={m.role==="user"?{marginLeft:"auto"}:undefined}
+                dangerouslySetInnerHTML={{__html:m.text}}
+              />
+            ))}
+            {typing && <div className="chat-bubble-pulse">Pensando…</div>}
+          </div>
+
+          <div className="input-row">
+            <input
+              className="chat-input"
+              placeholder="Cuéntame tu idea ☕⚡ (Enter = enviar)"
+              value={idea} onChange={(e)=>setIdea(e.target.value)} onKeyDown={onEnter}
+            />
+            <button className="chat-button" onClick={send} disabled={!idea.trim()}>Enviar</button>
+          </div>
+        </section>
+
+        <aside className="generator-card">
+          <h2>Generador en vivo ☕⚡</h2>
+          <div className="chips-grid">
+            {chips.map((chip,idx)=>(
+              <button key={idx} className="chip-button"
+                onClick={()=>onChip(idx)}
+                aria-pressed={activeChip===idx}
+                data-active={activeChip===idx?"true":"false"}
+              >
+                <span className="chip-emoji">{chip.icon}</span>
+                <span>{chip.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="preview-box">
+            <span className="opacity-80">
+              Preview en vivo listo ☕…
+            </span>
+          </div>
+        </aside>
+      </div>
+    </>
+  );
+}

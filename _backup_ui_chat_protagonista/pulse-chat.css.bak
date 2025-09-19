@@ -1,0 +1,149 @@
+/* ✨ Pulse Chat · Responsive + Chips activos + Preview 260px
+   Pixar × Tesla × Apple — solo estética, sin lógica
+*/
+
+/* ---------- Variables base ---------- */
+:root{
+  --radius: 14px;
+  --gap: 24px;
+
+  /* Tamaños UI */
+  --chip-h: 36px;
+  --chip-fs: 13px;
+  --icon: 18px;
+  --input-h: 46px;
+
+  /* Panel derecho */
+  --panelR-w: 300px;
+  --panelR-w-lg: 320px;
+
+  /* Pulse avatar responsive (se redefine en media queries) */
+  --avatar: 700px;   /* Desktop por defecto */
+  --bubble-fs: 13px;
+}
+
+/* ---------- Layout general ---------- */
+.chat-layout{
+  display:flex; gap:var(--gap); min-height:100vh; padding:24px;
+  background:linear-gradient(180deg,#06080f 0%,#000 100%);
+}
+
+/* ---------- Columna izquierda: Pulse ---------- */
+.pulse-avatar{
+  flex:0 0 var(--avatar);
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+  margin-bottom:40px;
+}
+.pulse-avatar img{
+  width:var(--avatar); height:auto; object-fit:contain;
+  filter:drop-shadow(0 0 50px rgba(56,189,248,.55));
+  animation:pulse-glow 3s infinite alternate;
+}
+@keyframes pulse-glow{
+  from{filter:drop-shadow(0 0 30px rgba(56,189,248,.35));}
+  to{filter:drop-shadow(0 0 70px rgba(56,189,248,.65));}
+}
+.pulse-avatar .bubble{
+  margin-top:12px; font-size:var(--bubble-fs); font-weight:600;
+  background:rgba(0,0,0,.6); border:1px solid rgba(255,255,255,.25);
+  color:#F8FAFC; padding:10px 14px; border-radius:14px;
+  backdrop-filter:blur(8px); box-shadow:0 4px 12px rgba(0,0,0,.45);
+}
+
+/* ---------- Centro: Chat ---------- */
+.chat-panel{
+  flex:1; display:flex; flex-direction:column; padding:18px; border-radius:14px;
+  background:rgba(12,14,20,.82); border:1px solid rgba(255,255,255,.1); backdrop-filter:blur(12px);
+  box-shadow:0 0 20px rgba(56,189,248,.15);
+}
+.chat-panel h1{font-size:17px;font-weight:800;margin:0 0 12px;}
+.chat-bubble-pulse,.chat-bubble-user{border-radius:14px;padding:12px;margin-bottom:12px;max-width:80%;}
+.chat-bubble-pulse{color:#fff;background:rgba(56,189,248,.15);border:1px solid #38BDF8;}
+.chat-bubble-user{color:#F8FAFC;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);}
+
+/* Input + botón */
+.chat-input{
+  width:100%;height:var(--input-h);padding:0 16px;border-radius:14px;
+  background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2);
+  font-size:13px;backdrop-filter:blur(6px);
+}
+.chat-input::placeholder{color:#a0a7b3;}
+.chat-input:focus{box-shadow:0 0 12px #38BDF8;border-color:#38BDF8;}
+.chat-button{
+  height:var(--input-h);padding:0 18px;border:none;border-radius:14px;cursor:pointer;
+  font-weight:800;font-size:13px;color:#fff;
+  background:linear-gradient(90deg,#FFD700,#FF9F45); box-shadow:0 0 15px rgba(56,189,248,.5);
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.chat-button:hover{transform:scale(1.05);box-shadow:0 0 20px rgba(56,189,248,.7);}
+.chat-button:active{transform:scale(.96);}
+
+/* ---------- Derecha: Generador ---------- */
+.generator-card{
+  width:var(--panelR-w);max-width:100%;
+  display:flex;flex-direction:column;padding:16px;border-radius:var(--radius);
+  background:linear-gradient(180deg,#0b1020 0%,#000 100%);
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 0 25px rgba(56,189,248,.1);
+}
+.generator-card h2{font-size:15px;font-weight:800;margin:0 0 12px;text-shadow:0 0 10px rgba(56,189,248,.3);}
+
+/* Chips: pill satinados + activo */
+.chips-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+.chip-button{
+  display:flex;align-items:center;gap:10px;width:100%;height:var(--chip-h);
+  padding:0 12px;border-radius:9999px;font-weight:700;font-size:var(--chip-fs);color:#0A0A0A;
+  background:linear-gradient(180deg,#f4f6fa,#e3eaf2);
+  border:1px solid rgba(255,255,255,.65);
+  box-shadow:0 4px 10px rgba(0,0,0,.22),0 0 12px rgba(56,189,248,.18);
+  transition:transform .12s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.chip-button:hover{ transform:translateY(-1px); box-shadow:0 6px 14px rgba(0,0,0,.28),0 0 16px rgba(56,189,248,.32); }
+.chip-emoji{
+  display:inline-grid;place-items:center;width:var(--icon);height:var(--icon);
+  border-radius:9999px;background:radial-gradient(circle at 30% 30%,#fff,#e9eef6);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+/* Estado ACTIVO accesible (soporta varias formas de activación) */
+.chip-button.active,
+.chip-button.is-active,
+.chip-button[aria-pressed="true"],
+.chip-button[data-active="true"]{
+  border:2px solid #38BDF8;
+  box-shadow:0 0 20px rgba(56,189,248,.55), 0 6px 16px rgba(0,0,0,.28);
+  transform:translateY(-1px);
+}
+.chip-button:focus-visible{
+  outline:2px solid #38BDF8; outline-offset:2px;
+}
+
+/* ---------- Preview más grande ---------- */
+.preview-box{
+  margin-top:14px;display:flex;align-items:center;justify-content:center;color:#fff;border-radius:14px;
+  background:rgba(5,8,15,.9) url('/banner/banner-spark-overlay.png') center/cover no-repeat;
+  border:1px solid rgba(255,255,255,.15);min-height:260px;  /* ↑ 260px */
+  box-shadow:0 0 20px rgba(56,189,248,.15),inset 0 0 30px rgba(10,14,30,.6);
+}
+
+/* ---------- Responsividad Pulse avatar ---------- */
+/* Desktop grande (>=1280px): 700px (por defecto) */
+@media(min-width:1280px){ .generator-card{width:var(--panelR-w-lg);} }
+
+/* Laptops medianos (1024–1279px): 500px */
+@media(max-width:1279px){
+  :root{ --avatar: 500px; }
+}
+
+/* Tablets (768–1023px): 360px */
+@media(max-width:1023px){
+  :root{ --avatar: 360px; }
+}
+
+/* Mobile (<=767px): 220px y layout en columna */
+@media(max-width:767px){
+  :root{ --avatar: 220px; }
+  .chat-layout{ flex-direction:column; gap:16px; padding:16px; }
+  .pulse-avatar{ order:0; width:100%; align-items:flex-start; }
+  .generator-card{ width:100%; }
+}

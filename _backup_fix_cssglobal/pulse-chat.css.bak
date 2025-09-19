@@ -1,0 +1,52 @@
+/* ✨ Pulse Chat Skin v0.2 – cristal/oro/cian */
+.chat-panel {
+  @apply bg-black/80 rounded-2xl p-4 border border-[#FFD700] shadow-lg;
+  backdrop-filter: blur(10px);
+}
+
+.chat-bubble-pulse {
+  @apply bg-cyan-500/20 text-white rounded-2xl p-3 mb-2 max-w-[80%];
+  border: 1px solid #38BDF8;
+  box-shadow: 0 0 8px #38BDF8aa;
+}
+
+.chat-bubble-user {
+  @apply bg-white/10 text-[#F8FAFC] rounded-2xl p-3 mb-2 ml-auto max-w-[80%];
+  border: 1px solid #FFD700aa;
+}
+
+.chat-input {
+  @apply w-full px-4 py-3 rounded-2xl bg-black/60 text-white placeholder-gray-300;
+  border: 1px solid #FFD700;
+  outline: none;
+}
+.chat-input:focus {
+  box-shadow: 0 0 12px #38BDF8;
+  border-color: #38BDF8;
+}
+
+.chat-button {
+  @apply font-bold text-white px-5 py-3 rounded-2xl;
+  background: linear-gradient(90deg, #FFD700, #FF9F45);
+  box-shadow: 0 0 16px #38BDF8aa;
+  transition: transform 0.15s ease;
+}
+.chat-button:hover {
+  transform: scale(1.05);
+}
+.chat-button:active {
+  transform: scale(0.95);
+}
+
+.generator-card {
+  @apply p-6 rounded-2xl;
+  background: linear-gradient(145deg, rgba(0,0,0,0.9), rgba(10,10,10,0.95));
+  border: 1px solid #FFD70066;
+  box-shadow: 0 0 24px #38BDF822;
+}
+.preview-box {
+  @apply mt-6 flex items-center justify-center text-white rounded-2xl;
+  background: rgba(0,0,0,0.8) url('/public/banner/banner-spark-overlay.png') center/cover no-repeat;
+  border: 2px solid #FFD700;
+  min-height: 240px;
+}

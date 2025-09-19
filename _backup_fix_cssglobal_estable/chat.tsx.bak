@@ -1,0 +1,77 @@
+import React, { useState } from "react";
+import Head from "next/head";
+
+
+const chips = [
+  { icon: "☕", label: "VENTAS", text: "Quiero poner mis productos online rápido." },
+  { icon: "📅", label: "GENERADOR RESERVAS", text: "Necesito que reserven mesa/cita sin llamar." },
+  { icon: "⚡", label: "Captar clientes", text: "Soy agencia/consultor y quiero leads premium." },
+  { icon: "🎉", label: "CARTEL PARA EVENTO", text: "Tengo concierto/gala/fiesta y necesito web YA." },
+  { icon: "🌐", label: "Portfolio creativo", text: "Soy fotógrafo, artista, diseñador o dev freelance." },
+  { icon: "💎", label: "Marca premium", text: "Quiero lujo, alto valor, estilo Tesla." },
+  { icon: "🏪", label: "Negocio local", text: "Tienda física, gym, peluquería: quiero presencia digital." },
+  { icon: "✍️", label: "Blog / Contenido", text: "Para escritores, periodistas, community managers." },
+  { icon: "🎥", label: "Influencer / Creador", text: "Soy tiktoker, streamer, y quiero centralizar mis links/brand." },
+  { icon: "🌱", label: "Proyecto social", text: "ONG, comunidad, activismo." },
+];
+
+export default function ChatPage() {
+  const [idea, setIdea] = useState("");
+
+  const handleChipClick = (text: string) => {
+    setIdea(text);
+    // Aquí podrías también disparar un mensaje automático en el chat
+  };
+
+  return (
+    <>
+      <Head>
+        <title>Chat con Pulse ☕⚡</title>
+      </Head>
+      <div className="min-h-screen bg-black text-white flex flex-col md:flex-row gap-6 p-6">
+        
+        {/* Panel izquierdo: Chat */}
+        <div className="chat-panel flex-1 flex flex-col">
+          <h1 className="text-xl font-bold mb-4">Chat con Pulse</h1>
+          <div className="flex-1 overflow-y-auto">
+            <div className="chat-bubble-pulse">
+              Estoy contigo. Háblame de tu web o negocio. 
+              ¿Qué te gustaría lograr primero: <b>ventas</b>, <b>reservas</b> o <b>leads</b>? ☕⚡
+            </div>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <input
+              className="chat-input flex-1"
+              placeholder="Cuéntame tu idea. Yo diseño antes de que se te enfríe el café… ☕⚡"
+              value={idea}
+              onChange={(e) => setIdea(e.target.value)}
+            />
+            <button className="chat-button">Enviar</button>
+          </div>
+        </div>
+
+        {/* Panel derecho: Generador con Chips */}
+        <div className="generator-card w-full md:w-96 flex flex-col">
+          <h2 className="text-lg font-bold mb-2">Generador en vivo ☕⚡</h2>
+
+          <div className="grid grid-cols-1 gap-2 mb-4">
+            {chips.map((chip, idx) => (
+              <button
+                key={idx}
+                className="chat-button flex items-center justify-start gap-2 px-4 py-2 text-sm"
+                onClick={() => handleChipClick(chip.text)}
+              >
+                <span>{chip.icon}</span>
+                <span className="font-semibold">{chip.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="preview-box">
+            <span className="opacity-80">Preview en vivo listo ☕…</span>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

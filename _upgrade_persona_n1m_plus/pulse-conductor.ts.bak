@@ -1,0 +1,48 @@
+/**
+ * Conductor de conversación:
+ * - Calcula en qué "fase" vamos según el historial.
+ * - Inserta una instrucción de control para obligar a micro-entregas y 3–6 líneas.
+ */
+export type ChatMsg = { role: "system"|"user"|"assistant"; content: string };
+
+export function getPhaseInstruction(history: ChatMsg[], maxLines: number) {
+  // Fase basada en # de mensajes del assistant (excluyendo system)
+  const assistantTurns = history.filter(m => m.role === "assistant").length;
+
+  const BASE = `
+REGLAS DURAS:
+- Máximo ${maxLines} líneas en total.
+- Divide en 2 bloques cortos separados por una línea en blanco.
+- UNA idea a la vez (micro-entrega). Nada de listas largas.
+- Espera feedback antes de seguir. No adelantes siguiente fase sin confirmación.
+`;
+
+  if (assistantTurns <= 1) {
+    return BASE + `
+FASE 1 (descubrimiento guiado):
+- Haz 1 reflejo y 1 pregunta clave de dirección (p. ej., "ventas" vs "comunidad").
+- Entrega UNA micro-idea: 1 titular **o** 1 subcopy breve, no ambos si no es necesario.
+- Cierra con un cliffhanger suave (invitando a elegir o afinar).
+`;
+  }
+  if (assistantTurns === 2) {
+    return BASE + `
+FASE 2 (primer ladrillo):
+- Usa las palabras del usuario.
+- Propón SOLO 1 pieza (p. ej., el Hero **o** la primera sección).
+- Pregunta si quiere esa pieza o una alternativa.
+`;
+  }
+  if (assistantTurns === 3) {
+    return BASE + `
+FASE 3 (siguiente ladrillo):
+- Añade una pieza nueva (p. ej., testimonios **o** CTA principal), coherente con lo anterior.
+- Recuerda algo que dijo el usuario y úsalo textualmente.
+`;
+  }
+  return BASE + `
+FASE PROGRESIVA:
+- Continúa ficha a ficha. Si el usuario pide todo, ofrece dividirlo en 2–3 pasos.
+- Evita "vomitar" estructura completa. Mantén 3–6 líneas y cliffhanger suave.
+`;
+}

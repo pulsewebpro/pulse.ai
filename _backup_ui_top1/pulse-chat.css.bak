@@ -1,0 +1,97 @@
+/* ✨ Pulse Chat · v3 Proporciones finalizadas (solo estética, sin lógica) */
+/* Variables */
+:root{
+  --radius: 14px;
+  --gap: 20px;
+  --chip-h: 36px;       /* compacto */
+  --chip-fs: 12.5px;
+  --icon: 18px;
+  --input-h: 42px;      /* compacto */
+  --panelR-w: 300px;    /* más estrecho */
+  --panelR-w-lg: 320px;
+  --avatar: 120px;      /* protagonista */
+  --bubble-fs: 13px;
+}
+
+/* Layout base */
+.chat-layout{
+  display:flex; gap:var(--gap); min-height:100vh; padding:20px;
+  background:
+    radial-gradient(1000px 500px at 15% -10%, rgba(56,189,248,.07), transparent 60%),
+    radial-gradient(900px 500px at 85% 110%, rgba(88,28,135,.08), transparent 55%),
+    linear-gradient(180deg,#0b1020,#000);
+}
+
+/* Izquierda: Pulse pensando */
+.pulse-avatar{ width:calc(var(--avatar) + 24px); display:flex; flex-direction:column; align-items:center; justify-content:flex-end }
+.pulse-avatar img{ width:var(--avatar); height:var(--avatar); object-fit:contain; filter:drop-shadow(0 12px 24px rgba(56,189,248,.36)); }
+.pulse-avatar .bubble{
+  font-size:var(--bubble-fs); line-height:1.2; color:#F8FAFC; opacity:.92; margin-top:8px;
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.18);
+  padding:7px 10px; border-radius:10px; text-align:center; backdrop-filter:blur(6px);
+}
+
+/* Centro: Chat */
+.chat-panel{
+  flex:1; display:flex; flex-direction:column; padding:16px; border-radius:var(--radius);
+  background:rgba(0,0,0,.86); border:1px solid rgba(255,255,255,.10); backdrop-filter:blur(10px);
+}
+.chat-panel h1{ font-size:16px; font-weight:800; margin:2px 0 12px; }
+.chat-bubble-pulse,.chat-bubble-user{ border-radius:12px; padding:10px; margin-bottom:10px; max-width:78%; }
+.chat-bubble-pulse{ color:#fff; border:1px solid #38BDF8; background:rgba(56,189,248,.18); }
+.chat-bubble-user{ color:#F8FAFC; border:1px solid rgba(255,255,255,.22); background:rgba(255,255,255,.06); }
+
+/* Input + Enviar */
+.chat-input{
+  width:100%; height:var(--input-h); padding:0 14px; border-radius:12px;
+  background:rgba(0,0,0,.6); color:#fff; border:1px solid #FFD700; outline:none; font-size:13px;
+}
+.chat-input::placeholder{ color:#cfd6de; }
+.chat-input:focus{ box-shadow:0 0 10px #38BDF8; border-color:#38BDF8; }
+.chat-button{
+  height:var(--input-h); padding:0 16px; border:none; border-radius:12px; cursor:pointer;
+  font-weight:800; font-size:13px; color:#fff;
+  background:linear-gradient(90deg,#FFD700,#FF9F45); box-shadow:0 0 12px rgba(56,189,248,.42);
+  transition:transform .12s ease;
+}
+.chat-button:hover{ transform:scale(1.03); }
+.chat-button:active{ transform:scale(.98); }
+
+/* Derecha: Generador */
+.generator-card{
+  width:var(--panelR-w); max-width:100%;
+  display:flex; flex-direction:column; padding:14px; border-radius:var(--radius);
+  background:rgba(10,10,20,.9); border:1px solid rgba(255,255,255,.08);
+}
+.generator-card h2{ font-size:15px; font-weight:800; margin:0 0 10px; }
+
+/* Chips plata compactos */
+.chips-grid{ display:grid; grid-template-columns:1fr; gap:8px; }
+.chip-button{
+  display:flex; align-items:center; gap:10px; width:100%; height:var(--chip-h);
+  padding:0 12px; border-radius:9999px; font-weight:700; font-size:var(--chip-fs); color:#0A0A0A;
+  background:linear-gradient(180deg,#f7f9fc,#e6edf4); border:1px solid rgba(255,255,255,.72);
+  box-shadow:0 5px 12px rgba(0,0,0,.2), 0 0 12px rgba(56,189,248,.2); transition:transform .1s ease;
+}
+.chip-button:hover{ transform:translateY(-1px); }
+.chip-emoji{
+  display:inline-grid; place-items:center; width:var(--icon); height:var(--icon); border-radius:9999px;
+  background:radial-gradient(circle at 30% 30%,#fff,#e9eef6); box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+/* Preview con aire y sin invadir */
+.preview-box{
+  margin-top:12px; display:flex; align-items:center; justify-content:center; color:#fff; border-radius:12px;
+  background:rgba(5,8,15,.92) url('/banner/banner-spark-overlay.png') center/cover no-repeat;
+  border:1px solid rgba(255,255,255,.14); min-height:210px;
+  box-shadow:0 0 16px rgba(56,189,248,.12), inset 0 0 26px rgba(10,14,30,.5);
+}
+
+/* Responsive */
+@media (min-width:1280px){ .generator-card{ width:var(--panelR-w-lg); } }
+@media (max-width:900px){
+  .chat-layout{ flex-direction:column; }
+  .pulse-avatar{ order:0; width:auto; flex-direction:row; justify-content:flex-start; gap:8px; }
+  .pulse-avatar img{ width:100px; height:100px; } /* sigue protagonista en móvil */
+  .generator-card{ width:100%; }
+}

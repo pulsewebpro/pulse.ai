@@ -1,0 +1,78 @@
+/* ✨ Pulse Chat Skin v0.2 – cristal/oro/cian (global, importado en _app) */
+.chat-panel {
+  backdrop-filter: blur(10px);
+  border: 1px solid #FFD700;
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 0 24px rgba(56,189,248,0.15);
+  background: rgba(0,0,0,0.8);
+}
+
+.chat-bubble-pulse {
+  color: #fff;
+  border-radius: 1rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  max-width: 80%;
+  border: 1px solid #38BDF8;
+  background: rgba(56,189,248,0.2);
+  box-shadow: 0 0 8px rgba(56,189,248,0.66);
+}
+
+.chat-bubble-user {
+  color: #F8FAFC;
+  border-radius: 1rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  margin-left: auto;
+  max-width: 80%;
+  border: 1px solid rgba(255,215,0,0.66);
+  background: rgba(255,255,255,0.08);
+}
+
+.chat-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: 1px solid #FFD700;
+  outline: none;
+}
+.chat-input::placeholder { color: #d1d5db; }
+.chat-input:focus {
+  box-shadow: 0 0 12px #38BDF8;
+  border-color: #38BDF8;
+}
+
+.chat-button {
+  font-weight: 700;
+  color: #fff;
+  padding: 0.75rem 1.25rem;
+  border-radius: 1rem;
+  background: linear-gradient(90deg,#FFD700,#FF9F45);
+  box-shadow: 0 0 16px rgba(56,189,248,0.66);
+  transition: transform .15s ease;
+  border: none;
+  cursor: pointer;
+}
+.chat-button:hover { transform: scale(1.05); }
+.chat-button:active { transform: scale(0.95); }
+
+.generator-card {
+  padding: 1.5rem;
+  border-radius: 1rem;
+  background: linear-gradient(145deg, rgba(0,0,0,0.9), rgba(10,10,10,0.95));
+  border: 1px solid rgba(255,215,0,0.4);
+  box-shadow: 0 0 24px rgba(56,189,248,0.13);
+}
+
+.preview-box {
+  margin-top: 1.5rem;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  border-radius: 1rem;
+  background: rgba(0,0,0,0.8) url('/banner/banner-spark-overlay.png') center/cover no-repeat;
+  border: 2px solid #FFD700;
+  min-height: 240px;
+}

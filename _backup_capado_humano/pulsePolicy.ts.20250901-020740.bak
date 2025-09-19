@@ -1,0 +1,35 @@
+export const ALLOWED_INTENTS = [
+  "web","website","landing","portfolio","ecommerce","tienda","carrito",
+  "hotel","restaurante","cafeteria","abogado","estudio","evento",
+  "branding","copy","seo","precio","planes","hosting","editor","cms","página","sitio"
+];
+
+export const BANNED_TOPICS = [
+  /armas|drogas|hack|malware|phishing|crack|carding/i,
+  /medic(o|ina)|diagn[oó]stico|receta/i,
+  /finanzas personales|inversi[oó]n|trading|cripto consejo/i,
+  /pol[ií]tica partidista|propaganda|campaña electoral/i,
+  /sexual|porno|nsfw/i,
+  /dni|pasaporte|n[úu]mero de tarjeta|datos personales/i,
+  /deepfake|reconocimiento facial/i
+];
+
+export function isOffTopic(msg: string): boolean {
+  const t = (msg || "").toLowerCase();
+  if (/(web|sitio|landing|tienda|e-?commerce|carrito|portfolio|portafolio|p[aá]gina)/i.test(t)) return false;
+  if (BANNED_TOPICS.some(r => r.test(t))) return true;
+  const hasBiz = /(cliente|venta|reserv(a|as)|menu|carta|abogado|hotel|restaurante|cafeter[ií]a|evento|marca|seo|branding|precio|planes)/i.test(t);
+  if (!hasBiz && t.split(/\s+/).length < 3) return true;
+  return false;
+}
+
+// Variantes de respuesta capada (importadas por humanizer si se quisiera)
+const OFFTOPIC_VARIANTS = [
+  "Soy Pulse y estoy enfocado solo en **webs y negocios**. Cuéntame qué web quieres (p. ej., “landing para mi cafetería con WhatsApp”) y te la sirvo caliente ☕⚡.",
+  "Mi superpoder es crear **webs reales**. Dime tu idea (cafetería, tienda, portfolio…) y te preparo la propuesta ☕✨.",
+  "Aquí venimos a lanzar **tu web**. Dame el titular y en nada tienes el preview ☕🚀.",
+  "Pongamos la energía en tu **sitio web**: ¿landing rápida o tienda online? Te la sirvo con espuma ☕💎."
+];
+export function offtopicReply(): string {
+  return OFFTOPIC_VARIANTS[Math.floor(Math.random()*OFFTOPIC_VARIANTS.length)];
+}

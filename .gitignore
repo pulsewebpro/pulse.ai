@@ -1,0 +1,10 @@
+node_modules/
+.next/
+_backup/
+.env*
+*.log
+
+# Ignorar fuentes pesadas de diseño
+ui-kit/**/*.fig
+ui-kit/**/*.sketch
+ui-kit/**/*.xd

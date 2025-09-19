@@ -1,0 +1,162 @@
+import React, { useEffect, useRef, useState } from "react";
+import Head from "next/head";
+import { pulseBrand, quips, planFromGoal, PulseGoal } from "@/lib/pulse/persona";
+import { loadMemory, saveMemory, loadLog, saveLog, Msg } from "@/lib/pulse/memory";
+
+/** Chips de intención (mismo copy que veníamos usando) */
+const chips: { icon: string; label: string; goal: PulseGoal; text: string }[] = [
+  { icon:"☕", label:"VENTAS", goal:"ventas", text:"Quiero poner mis productos online rápido." },
+  { icon:"📅", label:"GENERADOR RESERVAS", goal:"reservas", text:"Necesito que reserven mesa/cita sin llamar." },
+  { icon:"⚡", label:"Captar clientes", goal:"leads", text:"Soy agencia/consultor y quiero leads premium." },
+  { icon:"🎉", label:"CARTEL PARA EVENTO", goal:"evento", text:"Tengo concierto/gala/fiesta y necesito web YA." },
+  { icon:"🌐", label:"Portfolio creativo", goal:"portfolio", text:"Soy fotógrafo, artista, diseñador o dev freelance." },
+  { icon:"💎", label:"Marca premium", goal:"premium", text:"Quiero lujo, alto valor, estilo Tesla." },
+  { icon:"🏪", label:"Negocio local", goal:"local", text:"Tienda física, gym, peluquería: quiero presencia digital." },
+  { icon:"✍️", label:"Blog / Contenido", goal:"blog", text:"Para escritores, periodistas, community managers." },
+  { icon:"🎥", label:"Influencer / Creador", goal:"influencer", text:"Soy tiktoker/streamer y quiero centralizar mis links/brand." },
+  { icon:"🌱", label:"Proyecto social", goal:"social", text:"ONG, comunidad, activismo." },
+];
+
+/** Detecciones rápidas */
+const detectName = (t:string) => t.match(/\b(me llamo|mi nombre es)\s+([A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)\b/i)?.[2];
+const detectGoal = (t:string):PulseGoal => {
+  const s=t.toLowerCase();
+  if(/venta|tienda|checkout|producto/.test(s)) return "ventas";
+  if(/reserva|cita|booking|mesa/.test(s)) return "reservas";
+  if(/lead|captar|prospecto|formulario/.test(s)) return "leads";
+  if(/portfolio|portafolio|proyecto|trabajo/.test(s)) return "portfolio";
+  if(/premium|lujo|tesla|exclusiv/.test(s)) return "premium";
+  if(/local|peluquer|gimnasio|mapa|horario/.test(s)) return "local";
+  if(/blog|contenido|newsletter|artícul/.test(s)) return "blog";
+  if(/influencer|tiktok|stream|instagram|links?/.test(s)) return "influencer";
+  if(/social|ong|comunidad|activismo/.test(s)) return "social";
+  if(/evento|concierto|gala|fiesta|entradas?/.test(s)) return "evento";
+  return "desconocido";
+};
+
+export default function ChatPage(){
+  const [mem,setMem]=useState(loadMemory());
+  const [messages,setMessages]=useState<Msg[]>(() => {
+    const prev = loadLog();
+    if(prev.length) return prev;
+    return [{
+      role:"pulse",
+      text:`Estoy contigo. Háblame de tu web o negocio. ¿Qué te gustaría lograr primero: **ventas**, **reservas** o **leads**? ${pulseBrand.claim}`,
+      ts:Date.now()
+    }];
+  });
+  const [idea,setIdea]=useState("");
+  const [activeChip,setActiveChip]=useState<number|null>(null);
+  const [typing,setTyping]=useState(false);
+  const listRef=useRef<HTMLDivElement>(null);
+
+  useEffect(()=>{ saveMemory(mem); },[mem]);
+  useEffect(()=>{ saveLog(messages); },[messages]);
+  useEffect(()=>{ listRef.current?.scrollTo({top:listRef.current.scrollHeight,behavior:"smooth"}); },[messages.length,typing]);
+
+  const respond = async (userText:string, hint?:PulseGoal) => {
+    const name = detectName(userText);
+    const goal = hint ?? detectGoal(userText);
+    setMem(m=>{
+      const next={...m};
+      if(name) next.name = name[0].toUpperCase()+name.slice(1);
+      if(goal && goal!=="desconocido") next.goal=goal;
+      next.lastIdea=userText;
+      return next;
+    });
+
+    setTyping(true);
+    await new Promise(r=>setTimeout(r, 420+Math.random()*420));
+    const salute = mem.name ? `A la orden, **${mem.name}**.` : "A la orden.";
+    const core = planFromGoal(goal && goal!=="desconocido"?goal:(mem.goal||"desconocido"), mem.name, mem.jokesOn);
+    const tail = mem.jokesOn && Math.random()>0.6 ? `\n\n> ${quips[Math.floor(Math.random()*quips.length)]}` : "";
+    setTyping(false);
+    setMessages(m=>[...m,{role:"pulse",text:`${salute} ${core}${tail}`,ts:Date.now()}]);
+  };
+
+  const send = async ()=>{
+    const text=idea.trim();
+    if(!text) return;
+    setMessages(m=>[...m,{role:"user",text,ts:Date.now()}]);
+    setIdea("");
+    await respond(text);
+  };
+  const onEnter=async(e:React.KeyboardEvent<HTMLInputElement>)=>{
+    if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); await send(); }
+  };
+
+  const onChip=async(idx:number)=>{
+    const pick=chips[idx];
+    setActiveChip(idx);
+    setIdea(pick.text);
+    setMessages(m=>[...m,{role:"pulse",text:`Perfecto: **${pick.label}**. ${quips[Math.floor(Math.random()*quips.length)]}`,ts:Date.now()}]);
+    await respond(pick.text, pick.goal);
+  };
+
+  return (
+    <>
+      <Head>
+        <title>Chat con Pulse ☕⚡</title>
+        <meta name="description" content={pulseBrand.claim} />
+      </Head>
+
+      <div className="chat-layout">
+        {/* Izquierda: Pulse */}
+        <div className="pulse-avatar">
+          <img src="/pulse/pulse-neutral-coffee-4k.png" alt="Pulse pensando con café" loading="eager"/>
+          <div className="bubble">{mem.name ? `Pensando en ${mem.name}…` : "Estoy pensando tu mejor versión…"}</div>
+        </div>
+
+        {/* Centro: Chat */}
+        <section className="chat-panel" aria-label="Chat con Pulse">
+          <h1>Chat con Pulse</h1>
+
+          <div className="messages" ref={listRef} role="log" aria-live="polite" aria-relevant="additions text">
+            {messages.map((m,i)=>(
+              <div key={i}
+                className={m.role==="pulse"?"chat-bubble-pulse":m.role==="user"?"chat-bubble-user":"chat-bubble-pulse"}
+                style={m.role==="user"?{marginLeft:"auto"}:undefined}
+                dangerouslySetInnerHTML={{__html:m.text.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/`(.+?)`/g,"<code>$1</code>")}}
+              />
+            ))}
+            {typing && <div className="chat-bubble-pulse">Pensando…</div>}
+          </div>
+
+          <div className="input-row">
+            <input
+              className="chat-input"
+              placeholder="Cuéntame tu idea. Yo diseño antes de que se te enfríe el café… ☕⚡  (Enter para enviar, Shift+Enter para línea)"
+              value={idea} onChange={e=>setIdea(e.target.value)} onKeyDown={onEnter} aria-label="Escribe tu idea"
+            />
+            <button className="chat-button" onClick={send} disabled={!idea.trim()}>Enviar</button>
+          </div>
+        </section>
+
+        {/* Derecha: Generador */}
+        <aside className="generator-card" aria-label="Generador en vivo">
+          <h2>Generador en vivo ☕⚡</h2>
+          <div className="chips-grid">
+            {chips.map((chip,idx)=>(
+              <button key={idx} className="chip-button"
+                onClick={()=>onChip(idx)}
+                aria-pressed={activeChip===idx}
+                data-active={activeChip===idx?"true":"false"}
+                title={chip.text}
+              >
+                <span className="chip-emoji">{chip.icon}</span>
+                <span>{chip.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="preview-box" aria-label="Preview en vivo">
+            <span className="opacity-80">
+              {mem.goal && mem.goal!=="desconocido"
+                ? `Preview en vivo · foco: ${mem.goal} · ${pulseBrand.claim}`
+                : `Preview en vivo listo · ${pulseBrand.claim}`}
+            </span>
+          </div>
+        </aside>
+      </div>
+    </>
+  );
+}
