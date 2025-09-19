@@ -14,3 +14,6 @@ ui-kit/**/*.xd
 ui-kit/**/*.fig
 *.zip
 ui-kit/**/*.zip
+
+# Backups
+GUARDADO*/
