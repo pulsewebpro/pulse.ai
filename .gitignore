@@ -8,3 +8,9 @@ _backup/
 ui-kit/**/*.fig
 ui-kit/**/*.sketch
 ui-kit/**/*.xd
+
+# UI kit fuentes de diseño
+*.fig
+ui-kit/**/*.fig
+*.zip
+ui-kit/**/*.zip

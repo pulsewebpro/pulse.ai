@@ -1,3 +1,3 @@
-# UI Kit (fuentes de diseño)
-Las fuentes .fig son pesadas y se alojan fuera del repo.
-Acceso: (pon aquí tu enlace de Drive o carpeta compartida)
+# UI Kit (fuentes)
+
+Los archivos .fig están en Drive. Aquí solo irán bloques limpios en /ui-kit/clean.
