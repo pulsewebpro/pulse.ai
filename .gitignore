@@ -17,3 +17,7 @@ ui-kit/**/*.zip
 
 # Backups
 GUARDADO*/
+
+# Backups locales (no compilar)
+_copia de seguridad*/
+GUARDADO*/
