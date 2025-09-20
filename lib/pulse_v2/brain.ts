@@ -1,6 +1,6 @@
 import type { SessionState, ChatMessage } from './types';
 
-function lastUserText(messages: ChatMessage[]): string {
+function lastUserText(messages: ChatMessage[] = []): string {
   for (let i = messages.length - 1; i >= 0; i--) {
     const m = messages[i];
     if (m && m.role === 'user' && typeof m.content === 'string') return m.content;
@@ -8,13 +8,13 @@ function lastUserText(messages: ChatMessage[]): string {
   return '';
 }
 
-export async function nextAssistant(arg1?: any, arg2?: any): Promise<{
+export function nextAssistant(arg1?: any, arg2?: any): {
   text: string;
   reply: string;
   actions: any[];
   state: SessionState;
   chips?: string[];
-}> {
+} {
   let messages: ChatMessage[] = [];
   let prev: SessionState = { history: [], lang: 'es', premium: false };
 
@@ -45,4 +45,4 @@ export async function nextAssistant(arg1?: any, arg2?: any): Promise<{
   return { text: reply, reply, actions: [], state, chips: ['Hero','Grid','CTA'] };
 }
 
-export const PULSE_BRAIN_VERSION = 'safe-stub-v2';
+export const PULSE_BRAIN_VERSION = 'safe-stub-v3-sync';
