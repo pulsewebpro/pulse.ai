@@ -1,10 +1,37 @@
 [
   {
-    "id": "-",
-    "name": "*",
-    "category": "misc",
-    "tags": [],
+    "id": "landing",
+    "name": "Landing Starter",
+    "tags": ["general","demo","starter"],
     "previewPath": "/templates/landing.html",
-    "score": 0.85
+    "palette": ["#0ea5e9","#111827","#0b1020","#ffffff"]
+  },
+  {
+    "id": "ecommerce",
+    "name": "E-Commerce Básico",
+    "tags": ["ventas","tienda","shop","checkout","product"],
+    "previewPath": "/templates/ecommerce.html",
+    "palette": ["#22c55e","#0b1020","#111827","#ffffff"]
+  },
+  {
+    "id": "reservas",
+    "name": "Reservas / Agenda",
+    "tags": ["reserva","cita","agenda","booking","mesa","turno"],
+    "previewPath": "/templates/reservas.html",
+    "palette": ["#f59e0b","#0b1020","#111827","#ffffff"]
+  },
+  {
+    "id": "blog",
+    "name": "Blog / Contenido",
+    "tags": ["blog","articulo","contenido","noticias","seo"],
+    "previewPath": "/templates/blog.html",
+    "palette": ["#60a5fa","#0b1020","#111827","#ffffff"]
+  },
+  {
+    "id": "portfolio",
+    "name": "Portfolio / Creador",
+    "tags": ["portfolio","creador","influencer","link","bio","links"],
+    "previewPath": "/templates/portfolio.html",
+    "palette": ["#a78bfa","#0b1020","#111827","#ffffff"]
   }
 ]
