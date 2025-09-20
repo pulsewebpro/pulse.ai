@@ -1,13 +1,22 @@
-/**
- * Stub mínimo para compilar y desplegar.
- * Más adelante lo sustituimos por el generador real de ZIP.
- */
-export async function generateWebzipV01(_params: any): Promise<any> {
-  // estructura inocua que evita errores de tipos/uso
+/** Stub mínimo para compilar y desplegar en DEMO. */
+export type WebzipResult = {
+  filename: string;
+  mime: string;
+  data: Buffer;
+  meta: { stub: true; version: 'v01' };
+};
+
+export function generateWebzipV01(_params: any): WebzipResult {
   return {
     filename: 'pulse-demo.zip',
     mime: 'application/zip',
-    data: Buffer.from([]), // ZIP vacío; en demo no se usa esta ruta
-    meta: { stub: true, version: 'v01' }
+    data: Buffer.from([]),
+    meta: { stub: true, version: 'v01' },
   };
 }
+
+/* Alias para llamadas que usan Z mayúscula */
+export const generateWebZipV01 = generateWebzipV01;
+
+/* Export default por si algún sitio lo importa así */
+export default generateWebzipV01;
