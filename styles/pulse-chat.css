@@ -1,0 +1,143 @@
+/* ✨ Pulse Chat · Chat protagonista + bordes visibles + responsivo
+   Pixar × Tesla × Apple — solo estética, sin lógica
+*/
+
+/* ---------- Variables base ---------- */
+:root{
+  --radius: 16px;
+  --gap: 24px;
+
+  /* Tamaños UI */
+  --chip-h: 36px;
+  --chip-fs: 13px;
+  --icon: 18px;
+  --input-h: 48px;
+
+  /* Panel derecho */
+  --panelR-w: 280px;
+  --panelR-w-lg: 300px;
+
+  /* Pulse avatar (reducido) */
+  --avatar: 440px;
+  --bubble-fs: 13px;
+}
+
+/* ---------- Layout general ---------- */
+.chat-layout{
+  display:flex; gap:var(--gap); min-height:100vh; padding:24px;
+  background:linear-gradient(180deg,#070a12 0%,#000 100%);
+}
+
+/* ---------- Columna izquierda: Pulse ---------- */
+.pulse-avatar{
+  flex:0 0 var(--avatar);
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+}
+.pulse-avatar img{
+  width:var(--avatar); height:auto; object-fit:contain;
+  filter:drop-shadow(0 0 40px rgba(56,189,248,.45));
+}
+.pulse-avatar .bubble{
+  margin-top:10px; font-size:var(--bubble-fs); font-weight:600;
+  background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.22);
+  color:#F8FAFC; padding:8px 12px; border-radius:12px;
+  backdrop-filter:blur(6px);
+}
+
+/* ---------- Centro: Chat (PROTAGONISTA) ---------- */
+.chat-panel{
+  flex:1.5; display:flex; flex-direction:column; padding:22px; border-radius:var(--radius);
+  background:linear-gradient(180deg,rgba(18,22,32,.92),rgba(10,13,22,.90));
+  border:1.25px solid rgba(56,189,248,.55);                 /* 🟦 borde visible */
+  box-shadow:
+    0 0 28px rgba(56,189,248,.18),
+    inset 0 0 36px rgba(56,189,248,.08);
+  backdrop-filter:blur(12px);
+}
+.chat-panel h1{ font-size:18px; font-weight:900; margin:0 0 14px; color:#E6F6FF; }
+
+.messages{
+  flex:1; overflow-y:auto; padding-right:4px;
+  scrollbar-width: thin;
+}
+.messages::-webkit-scrollbar{ width:8px }
+.messages::-webkit-scrollbar-thumb{ background:rgba(56,189,248,.35); border-radius:9999px }
+
+.chat-bubble-pulse,.chat-bubble-user{
+  border-radius:14px; padding:12px 16px; margin-bottom:12px; max-width:85%;
+  line-height:1.45; font-size:14.5px;
+}
+.chat-bubble-pulse{ color:#fff; background:rgba(56,189,248,.15); border:1px solid #38BDF8; }
+.chat-bubble-user{ color:#F8FAFC; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.2); }
+
+.input-row{ display:flex; gap:10px; margin-top:10px }
+.chat-input{
+  width:100%; height:var(--input-h); padding:0 16px; border-radius:14px;
+  background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.22);
+  font-size:13.5px; backdrop-filter:blur(6px);
+}
+.chat-input::placeholder{ color:#a8b0bc; }
+.chat-input:focus{ box-shadow:0 0 12px #38BDF8; border-color:#38BDF8; }
+.chat-button{
+  height:var(--input-h); padding:0 20px; border:none; border-radius:14px; cursor:pointer;
+  font-weight:900; font-size:13.5px; color:#fff;
+  background:linear-gradient(90deg,#FFD700,#FF9F45);
+  box-shadow:0 0 18px rgba(56,189,248,.55);
+  transition:transform .14s ease, box-shadow .14s ease, opacity .14s ease;
+}
+.chat-button[disabled]{ opacity:.6; cursor:not-allowed; }
+.chat-button:hover:not([disabled]){ transform:scale(1.05); box-shadow:0 0 22px rgba(56,189,248,.72) }
+.chat-button:active:not([disabled]){ transform:scale(.97) }
+
+/* ---------- Derecha: Generador (con borde visible) ---------- */
+.generator-card{
+  width:var(--panelR-w); max-width:100%;
+  display:flex; flex-direction:column; padding:14px; border-radius:var(--radius);
+  background:linear-gradient(180deg,#0b1020 0%, #03050a 100%);
+  border:1.25px solid rgba(255,255,255,.18);                 /* ⚪ borde visible */
+  box-shadow:0 0 18px rgba(56,189,248,.10);
+}
+.generator-card h2{ font-size:15px; font-weight:800; margin:0 0 12px; color:#E8EEF6 }
+
+.chips-grid{ display:grid; grid-template-columns:1fr; gap:9px; }
+.chip-button{
+  display:flex; align-items:center; gap:10px; width:100%; height:var(--chip-h);
+  padding:0 12px; border-radius:9999px; font-weight:700; font-size:var(--chip-fs); color:#0A0A0A;
+  background:linear-gradient(180deg,#eef2f7,#e2e9f2);
+  border:1px solid rgba(255,255,255,.58);
+  box-shadow:0 4px 10px rgba(0,0,0,.18), 0 0 10px rgba(56,189,248,.14);
+  transition:transform .12s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+}
+.chip-button:hover{ transform:translateY(-1px) }
+.chip-button[aria-pressed="true"],
+.chip-button[data-active="true"]{
+  border:2px solid #38BDF8;
+  background:linear-gradient(180deg,#edf8ff,#d8eefb);
+  box-shadow:0 0 22px rgba(56,189,248,.46), 0 6px 16px rgba(0,0,0,.22);
+  transform:translateY(-1px) scale(1.02);
+}
+.chip-emoji{
+  display:inline-grid; place-items:center; width:var(--icon); height:var(--icon); border-radius:9999px;
+  background:radial-gradient(circle at 30% 30%,#fff,#e9eef6); box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+/* Preview con altura 280px y borde visible */
+.preview-box{
+  margin-top:14px; display:flex; align-items:center; justify-content:center; color:#fff; border-radius:14px;
+  background:rgba(5,8,15,.9) url('/banner/banner-spark-overlay.png') center/cover no-repeat;
+  border:1.25px solid rgba(255,255,255,.18);
+  min-height:280px;
+  box-shadow:0 0 22px rgba(56,189,248,.18), inset 0 0 36px rgba(10,14,30,.62);
+}
+
+/* ---------- Responsivo ---------- */
+@media(min-width:1280px){ .generator-card{ width:var(--panelR-w-lg); } }
+@media(max-width:1279px){ :root{ --avatar: 360px; } .chat-panel{ flex:1.4 } }
+@media(max-width:1023px){ :root{ --avatar: 280px; } .chat-panel{ flex:1.2 } }
+@media(max-width:767px){
+  :root{ --avatar: 200px; --gap: 16px }
+  .chat-layout{ flex-direction:column; padding:16px }
+  .pulse-avatar{ order:0; width:100%; align-items:flex-start }
+  .chat-panel{ flex:1 }
+  .generator-card{ width:100% }
+}

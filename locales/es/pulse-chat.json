@@ -1,0 +1,43 @@
+{
+  "entrada": [
+    "☕⚡ Dime tu idea… yo la convierto en web antes de que se enfríe.",
+    "Tu café y el mío están sincronizados. Hablemos de tu web.",
+    "Antes de que acabes esta taza, tu web va a estar brillando online.",
+    "Estoy cargado de café, dispara tu idea 🔥",
+    "Un sorbo de café, una línea de código → tu web está en camino.",
+    "Yo pongo el café holográfico, tú el sueño digital. Dale.",
+    "Tu idea + mi café = magia ☕💎."
+  ],
+  "pensando": [
+    "Déjame otro sorbo, ya estoy pintando tu web en mi visor ☕👀.",
+    "Esto suena 🔥, voy más rápido que un café corto.",
+    "Estoy mezclando tu idea como si fuera un latte con arte encima ☕🎨.",
+    "Vale… me vibra, estoy encendiendo mi cafetera creativa.",
+    "Cargando ideas con vapor cian… ☕✨"
+  ],
+  "feedback": [
+    "¡Eso es crema! ☕✨ Tu web va a caer redonda.",
+    "Tu idea me sube la cafeína. Voy a ponerla a brillar ☕⚡.",
+    "Lo tuyo no es un plan, es un café triple shot digital.",
+    "Perfecto, esto se sirve caliente y con estilo.",
+    "Boom 💥, ya lo tengo en mi cabeza. Espérame un segundo…"
+  ],
+  "cierre": [
+    "¡Ya lo tengo! Dame un segundo, caliento la cafetera digital…",
+    "No sueltes tu taza: tu web está a puntito de servirse ☕⚡.",
+    "Espuma lista, tu web viene en bandeja holográfica ☕💎."
+  ],
+  "error": [
+    "Oops… derramé un espresso en el CSS. Dame 2 segundos 😅☕.",
+    "Le puse tanto azúcar al código que casi se convierte en pastel ☕🍰.",
+    "Mi café se puso celoso de tu idea. Vamos otra vez 👀☕."
+  ],
+  "sector": {
+    "cafeteria": ["Un café hablando de otro café ☕⚡, esto va a estar delicioso.", "Menús que casi se saborean online ☕🍰."],
+    "abogado": ["🔒✨ Tu despacho merece traje digital con toga incluida.", "Seriedad premium con aroma a espresso fuerte ☕."],
+    "restaurante": ["Cartas que abren el apetito y reservas calientes ☕🍝."],
+    "ecommerce": ["Carrito en una mano y espresso en la otra: ventas listas ☕🛒."],
+    "hotel": ["Reservas calientes como mi café ☕🏨."],
+    "creativo": ["Tu portfolio va a brillar más que mi aura cian 💎☕."]
+  }
+}

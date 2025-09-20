@@ -1,0 +1,60 @@
+/* Pulse · Psicología Visual Chat
+   Solo afecta a /chat (no toca la home) */
+
+.chat-container {
+  @apply flex flex-col gap-4 p-4;
+  font-family: 'Inter', sans-serif;
+}
+
+.chat-bubble {
+  @apply max-w-xl px-4 py-3 rounded-2xl leading-relaxed;
+  line-height: 1.6;
+}
+
+/* Usuario */
+.chat-bubble.user {
+  @apply self-end bg-gray-800 text-gray-200;
+  font-size: 0.95rem;
+}
+
+/* Pulse */
+.chat-bubble.pulse {
+  @apply self-start bg-[#0A0A0A] text-gray-100 shadow-lg;
+  border-left: 3px solid #38BDF8; /* cian */
+  font-size: 1rem;
+}
+
+/* Jerarquía interna en mensajes de Pulse */
+.chat-bubble.pulse strong {
+  @apply text-white font-semibold;
+  color: #FFD700; /* dorado */
+}
+
+.chat-bubble.pulse em {
+  @apply italic text-gray-300;
+}
+
+/* Preguntas → cian suave */
+.chat-bubble.pulse.question {
+  color: #38BDF8;
+  font-weight: 500;
+}
+
+/* Cliffhangers → gris más tenue */
+.chat-bubble.pulse.cliff {
+  @apply italic;
+  color: #9CA3AF;
+}
+
+/* Aire extra entre bloques */
+.chat-bubble + .chat-bubble {
+  margin-top: 0.5rem;
+}
+
+/* Ajuste tipográfico general */
+.chat-bubble p {
+  margin-bottom: 0.4rem;
+}
+.chat-bubble p:last-child {
+  margin-bottom: 0;
+}
