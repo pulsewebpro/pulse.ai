@@ -7,8 +7,8 @@ export interface SessionState {
   id?: string;
   lang?: 'es'|'en'|'fr';
   premium?: boolean;
-  history: ChatMessage[];
-  stage?: Stage;              // ← usado por /pages/api/pulse-chat.ts
-  asked?: number;             // ← contador de preguntas
-  slots?: Record<string, any>;// ← datos recogidos
+  history?: ChatMessage[];        // ← opcional (antes requerido)
+  stage?: Stage;
+  asked?: number;
+  slots?: Record<string, any>;
 }
