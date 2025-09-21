@@ -25,7 +25,7 @@ const chips: { icon: string; label: string; goal: PulseIntent; text: string }[] 
   { icon:"📅", label:"GENERADOR RESERVAS",   goal:"reservas", text:"Necesito que reserven mesa/cita sin llamar." },
   { icon:"✍️", label:"Blog / Contenido",     goal:"blog",     text:"Para escritores, periodistas, community managers." },
   { icon:"🎥", label:"Influencer / Creador", goal:"influencer", text:"Soy tiktoker/streamer y quiero centralizar mis links/brand." },
-  { icon:"🌱", label:"Proyecto social",      goal:"default",  text:"ONG local con donaciones sencillas y voluntariado." },
+  { icon:"🌱", label:"Proyecto social", goal:"proyecto",  text:"ONG local con donaciones sencillas y voluntariado." },
 ];
 
 // Intent seguro (sin “social” en tipo)
@@ -35,7 +35,7 @@ const detectIntent = (t:string):PulseIntent => {
   if(/reserva|cita|booking/.test(s)) return "reservas";
   if(/blog|contenido|post/.test(s)) return "blog";
   if(/influencer|tiktok|youtube|twitch|instagram/.test(s)) return "influencer";
-  if(/social|ong|comunidad|activismo/.test(s)) return "default";
+  if(/social|ong|comunidad|activismo/.test(s)) return "proyecto";
   return "default";
 };
 
@@ -74,7 +74,7 @@ export default function ChatPage(){
     setTyping(true);
     await new Promise(r=>setTimeout(r, 300+Math.random()*400));
     setTurn(t=>t+1);
-    let reply = "";
+    let reply = getPulseResponse(goal, userText, turn);
     if(premium && mem){
       if(goal==="ventas"){ reply += " 💡 Idea: podemos añadir upsells (ej. complementos) para aumentar ticket medio."; }
       if(goal==="blog"){ reply += " 💡 Idea: newsletter automática para fidelizar comunidad."; }
