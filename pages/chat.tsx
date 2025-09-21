@@ -74,7 +74,7 @@ export default function ChatPage(){
     setTyping(true);
     await new Promise(r=>setTimeout(r, 300+Math.random()*400));
     setTurn(t=>t+1);
-    let reply = getPulseResponse(goal,userText,turn);
+    let reply = "";
     if(premium && mem){
       if(goal==="ventas"){ reply += " 💡 Idea: podemos añadir upsells (ej. complementos) para aumentar ticket medio."; }
       if(goal==="blog"){ reply += " 💡 Idea: newsletter automática para fidelizar comunidad."; }
