@@ -115,7 +115,7 @@ export function getPulseResponse(
   }
 
   const follow = data.followUp[Math.floor(Math.random() * data.followUp.length)];
-  const humor = turn % 3 === 0 ? " Yo pongo el diseño, tú pones el café ☕⚡" : "";
+  const humor = Math.random()<0.15 ? " Yo pongo el diseño, tú pones el café ☕⚡" : "";
 
   return `${base} ${follow}${humor}`.trim();
 }
