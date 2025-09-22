@@ -1,0 +1,52 @@
+# trigger,vertical,objetivo,modelo_hint
+spotify,streaming,suscripcion,suscripcion
+tipo spotify,streaming,suscripcion,suscripcion
+como spotify,streaming,suscripcion,suscripcion
+musica,streaming,suscripcion,suscripcion
+música,streaming,suscripcion,suscripcion
+playlist,streaming,suscripcion,suscripcion
+player,streaming,suscripcion,suscripcion
+podcast,streaming,suscripcion,suscripcion
+suscripcion,streaming,suscripcion,suscripcion
+suscripción,streaming,suscripcion,suscripcion
+pago por descarga,streaming,vender,checkout
+anuncios audio,streaming,leads,formulario
+streaming,streaming,suscripcion,suscripcion
+
+tienda online,ecommerce,vender,checkout
+ecommerce,ecommerce,vender,checkout
+e-commerce,ecommerce,vender,checkout
+vender,ecommerce,vender,checkout
+carrito,ecommerce,vender,checkout
+checkout,ecommerce,vender,checkout
+pago online,ecommerce,vender,checkout
+stripe,ecommerce,vender,checkout
+productos,ecommerce,vender,checkout
+catálogo,ecommerce,vender,checkout
+oferta,ecommerce,vender,checkout
+envío,ecommerce,vender,checkout
+tallas,ecommerce,vender,checkout
+whatsapp venta,ecommerce,vender,whatsapp
+
+reservas,reservas,reservas,calendario
+citas,reservas,reservas,calendario
+agenda,reservas,reservas,calendario
+mesa,reservas,reservas,calendario
+restaurante,reservas,reservas,calendario
+cafetería,reservas,reservas,whatsapp
+abogado,reservas,reservas,calendario
+recordatorios,reservas,reservas,calendario
+whatsapp reserva,reservas,reservas,whatsapp
+
+leads,leads,leads,formulario
+presupuesto,leads,leads,formulario
+contacto,leads,leads,formulario
+whatsapp leads,leads,leads,whatsapp
+consultoría,leads,leads,formulario
+reformas,leads,leads,formulario
+
+portfolio,portfolio,leads,formulario
+portafolio,portfolio,leads,formulario
+fotógrafo,portfolio,leads,formulario
+diseñador,portfolio,leads,formulario
+ilustrador,portfolio,leads,formulario

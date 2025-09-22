@@ -1,0 +1,32 @@
+:root {
+  --pulse-cyan: #38BDF8;
+  --pulse-gold: #FFD700;
+  --pulse-bg: #060B12;
+  --pulse-panel: #0C1622;
+  --pulse-text: #E6F3FF;
+}
+.pulsev2-page{min-height:100svh;background:radial-gradient(1200px 500px at 10% 10%,#0e1a28 0%,#05080d 60%,#05080d 100%)}
+.pulsev2-wrap{max-width:1200px;margin:0 auto;padding:24px}
+.pulsev2-grid{display:grid;grid-template-columns:420px 1fr;gap:24px}
+.pulsev2-left{background:rgba(8,16,24,.6);border:1px solid rgba(56,189,248,.15);border-radius:24px;padding:24px;display:flex;align-items:center;justify-content:center}
+.pulsev2-left img{max-width:100%;height:auto;filter:drop-shadow(0 10px 40px rgba(56,189,248,.2))}
+.pulsev2-right{background:rgba(8,16,24,.55);border:1px solid rgba(56,189,248,.12);border-radius:24px;padding:24px}
+.pulsev2-h1{color:#fff;font-weight:800;font-size:28px;letter-spacing:.2px;margin:0 0 16px}
+.pulsev2-chat{height:420px;overflow:auto;border:1px solid rgba(56,189,248,.12);border-radius:16px;padding:14px;background:linear-gradient(180deg,rgba(6,11,18,.7),rgba(6,11,18,.4))}
+.pulsev2-msg{max-width:78%;margin:10px 0;padding:12px 14px;border-radius:16px;line-height:1.45;color:var(--pulse-text);font-size:15px}
+.pulsev2-msg.assistant{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2)}
+.pulsev2-msg.user{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);margin-left:auto}
+.pulsev2-input{display:flex;gap:12px;margin-top:14px}
+.pulsev2-text{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(56,189,248,.22);border-radius:14px;padding:14px;color:#e7f6ff}
+.pulsev2-send{background:linear-gradient(180deg,#FFB34D,#FF9F45);border:2px solid #FFD700;color:#0A0A0A;font-weight:800;border-radius:14px;padding:0 22px}
+.pulsev2-chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.pulsev2-chip{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.25);color:#CFEFFF;padding:8px 12px;border-radius:999px;font-size:13px;cursor:pointer}
+.pulsev2-loader{display:inline-flex;align-items:center;gap:10px}
+.pulsev2-loader img{width:28px;height:28px;animation:float 1.6s ease-in-out infinite}
+@keyframes float{0%{transform:translateY(0)}50%{transform:translateY(-4px)}100%{transform:translateY(0)}}
+.pulsev2-actions{margin-top:12px;display:grid;gap:12px}
+.pulsev2-card{background:rgba(12,22,34,.6);border:1px solid rgba(56,189,248,.18);border-radius:16px;padding:14px;color:#EAF6FF}
+.pulsev2-planrow{display:flex;gap:12px;flex-wrap:wrap}
+.pulsev2-plan{flex:1 1 180px;background:rgba(255,255,255,.06);border:1px solid rgba(255,215,0,.35);border-radius:16px;padding:12px}
+.pulsev2-cta{margin-top:8px;background:linear-gradient(180deg,#FFD700,#FFB34D);border:1px solid #FFD700;color:#0A0A0A;font-weight:800;border-radius:12px;padding:8px 12px}
+@media (max-width: 980px){.pulsev2-grid{grid-template-columns:1fr}}

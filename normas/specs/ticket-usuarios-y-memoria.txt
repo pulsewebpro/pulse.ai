@@ -1,0 +1,47 @@
+TÍTULO: PULSE · Usuarios + Memoria Premium (MVP legal 100%)
+
+OBJETIVO:
+Implementar cuentas de usuario (registro/login/logout), perfil mínimo y Memoria Premium con persistencia file-based en /data, cumpliendo legalidad internacional y guardias existentes. No tocar /pages/index.*.
+
+ALCANCE:
+1) Endpoints:
+   - POST /api/auth/register, POST /api/auth/login, POST /api/auth/logout
+   - GET /api/me
+   - GET/POST/DELETE /api/pulse/memory y POST /api/pulse/memory/export
+2) UI:
+   - /pages/auth/register.tsx, /pages/auth/login.tsx
+   - /pages/account/index.tsx (ver plan/consentimientos/export/borrar)
+   - /pages/account/chat.tsx (ventana persistente)
+   - /pages/account/site.tsx (publicar sitio simulado)
+3) Persistencia (dev/MVP):
+   - /data/users.json, /data/sessions.json, /data/memory/{userId}.json, /data/sites/{userId}/
+4) Seguridad:
+   - Cookie de sesión httpOnly+Secure+SameSite=Lax
+   - Hash+salt de contraseña con coste configurable (memoria-duro)
+   - Rate limit básico en login; cooldown tras fallos
+5) Legal:
+   - Registro exige consentimiento privacidad
+   - Export y borrado total (derecho al olvido)
+   - No usar datos con fines externos
+6) Flags .env:
+   - PULSE_SESSION_SECRET, PULSE_PERSIST_MODE=file, PULSE_DB_DIR=./data, PULSE_SUBSCRIPTIONS=on
+
+REGLAS DURAS:
+- No tocar /pages/index.* (home sagrada).
+- Sin marcas externas.
+- Idempotente y legal 100%.
+
+DONE:
+- Alta/login/logout funcionando con cookies seguras.
+- /account muestra plan y consents; permite exportar y borrar.
+- Rutas de memoria operativas y condicionadas a plan/consent.
+- Chat en /account/chat lee la memoria del usuario si ON.
+- Preflight pasa.
+
+REFERENCIAS:
+- normas/testamento.md
+- normas/vision.md
+- normas/psicologia.md
+- normas/specs/usuarios.md
+- normas/specs/memoria-premium.md
+- normas/specs/hosting-area.md

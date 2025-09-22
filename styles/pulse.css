@@ -1,0 +1,63 @@
+/* ================= Pulse · Hero portada (LOCK v2) ================= */
+:root{--cyan-1:#6EE7F9;--cyan-2:#22D3EE;--gold:#FBBF24;--page-bg:#000;--text:#FFF}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--page-bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,"Noto Sans";-webkit-font-smoothing:antialiased}
+
+/* HERO */
+.hero{
+  position:relative;min-height:100svh;display:flex;align-items:center;justify-content:flex-end;overflow:hidden;
+  background:
+    /* Gradiente MUY sutil: solo lado izq ~15%, se disipa hacia el centro */
+    linear-gradient(90deg,
+      rgba(0,0,0,.45) 0%,
+      rgba(0,0,0,.15) 15%,
+      rgba(0,0,0,0)   38%,
+      rgba(0,0,0,0)   100%),
+    url("/banner/banner-hero-rightspace-v2-4k.png") center right/cover no-repeat,
+    var(--page-bg)
+}
+.hero__inner{
+  width:100%;max-width:560px;margin-right:clamp(16px,6vw,72px);
+  display:flex;flex-direction:column;text-align:left;gap:clamp(8px,1.6vh,12px) /* pirámide compacta */
+}
+
+/* Título (UNA SOLA LÍNEA) con glow cine */
+.title{
+  margin:0;line-height:.95;font-weight:900;font-size:clamp(44px,6.4vw,72px);white-space:nowrap;
+  text-shadow:0 0 36px rgba(110,231,249,.24),0 0 14px rgba(255,255,255,.40),0 0 3px rgba(255,255,255,.65)
+}
+
+/* Kicker dorado pegado */
+.kicker{
+  color:var(--gold);font-weight:800;font-size:clamp(16px,2vw,22px);margin:-2px 0 0 0;
+  text-shadow:0 0 10px rgba(251,191,36,.25)
+}
+
+/* Subtítulo EN 2 LÍNEAS forzadas */
+.subtitle{margin:0;opacity:.9;font-size:clamp(11px,1.1vw,12.5px);letter-spacing:.20em;text-transform:uppercase}
+.subtitle .line{display:block}
+
+/* CTA exacto: pequeño + pegado */
+.hero__spacer{height:0 !important}
+.cta{
+  display:inline-block;width:clamp(170px,14.5vw,200px);margin-top:clamp(2px,.4vh,6px);
+  user-select:none;-webkit-user-drag:none;filter:drop-shadow(0 8px 16px rgba(34,211,238,.20))
+}
+.cta img{width:100%;height:auto;display:block}
+
+@media (max-width:860px){
+  .hero{
+    justify-content:center;
+    /* En móvil mantenemos contraste pero suave */
+    background:
+      linear-gradient(180deg,
+        rgba(0,0,0,.45) 0%,
+        rgba(0,0,0,.18) 28%,
+        rgba(0,0,0,0)   60%),
+      url("/banner/banner-hero-rightspace-v2-4k.png") center/cover no-repeat,
+      var(--page-bg)
+  }
+  .hero__inner{margin:0 20px;align-items:center;text-align:center}
+  .title{white-space:normal} /* si la pantalla es muy estrecha, permitimos salto */
+}

@@ -1,0 +1,7 @@
+# Ignorar backups y fuentes pesadas
+GUARDADO*/
+_copia de seguridad*/
+ui-kit/**/*.fig
+ui-kit/**/*.zip
+*.fig
+*.zip

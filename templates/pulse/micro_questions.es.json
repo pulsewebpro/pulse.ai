@@ -1,0 +1,26 @@
+{
+  "default": [
+    "¿Qué quieres lograr primero: vender, reservas o conseguir leads?",
+    "¿Cómo cerramos la acción: checkout, WhatsApp o formulario?"
+  ],
+  "streaming": [
+    "¿Música propia o de varios artistas?",
+    "¿Modelo: suscripción mensual, anuncios o pago por descarga?"
+  ],
+  "ecommerce": [
+    "¿Prefieres checkout directo o WhatsApp para dudas?",
+    "¿Envío a todo el país o local?"
+  ],
+  "reservas": [
+    "¿Reserva por WhatsApp o calendario con horarios?",
+    "¿Necesitas recordatorios por email?"
+  ],
+  "leads": [
+    "¿Mejor WhatsApp o formulario de contacto?",
+    "¿Quieres casos de éxito o testimonios?"
+  ],
+  "portfolio": [
+    "¿Qué trabajo quieres destacar primero?",
+    "¿Contacto por email o por formulario?"
+  ]
+}

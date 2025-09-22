@@ -1,0 +1,8 @@
+import '@/styles/pulse-chat.css';
+import type { AppProps } from "next/app";
+import "../styles/globals.css";
+import "../styles/pulse.css";
+
+export default function App({ Component, pageProps }: AppProps) {
+  return <Component {...pageProps} />;
+}

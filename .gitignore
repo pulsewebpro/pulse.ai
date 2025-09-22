@@ -1,0 +1,46 @@
+# ======================
+# ⚡☕ PULSE · .gitignore
+# ======================
+
+# Dependencias
+node_modules/
+
+# Builds locales de Next.js / React
+.next/
+out/
+dist/
+
+# Copias y backups
+_backup*/
+tmp/
+*.bak
+
+# Configuración sensible (claves, tokens, etc.)
+.env*
+!.env.example
+!.env.local.example
+
+# Logs y reports
+*.log
+coverage/
+reports/
+
+# Archivos temporales de OS
+.DS_Store
+Thumbs.db
+
+# Configs de editores (no subir)
+.vscode/
+.idea/
+
+# Archivos generados por QA o scripts
+*.cache
+*.tmp
+
+# Ignorar backups y volcados locales
+GUARDADO*/
+_backup*/
+*.fig
+
+.vercel
+ui-kit/
