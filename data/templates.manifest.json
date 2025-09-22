@@ -2,36 +2,81 @@
   {
     "id": "landing",
     "name": "Landing Starter",
-    "tags": ["general","demo","starter"],
+    "tags": [
+      "general",
+      "demo",
+      "starter"
+    ],
     "previewPath": "/templates/landing.html",
-    "palette": ["#0ea5e9","#111827","#0b1020","#ffffff"]
+    "palette": [
+      "#0ea5e9",
+      "#111827",
+      "#0b1020",
+      "#ffffff"
+    ]
   },
   {
     "id": "ecommerce",
     "name": "E-Commerce Básico",
-    "tags": ["ventas","tienda","shop","checkout","product"],
+    "tags": [
+      "ventas",
+      "tienda",
+      "shop"
+    ],
     "previewPath": "/templates/ecommerce.html",
-    "palette": ["#22c55e","#0b1020","#111827","#ffffff"]
+    "palette": [
+      "#22c55e",
+      "#0b1020",
+      "#111827",
+      "#ffffff"
+    ]
   },
   {
     "id": "reservas",
     "name": "Reservas / Agenda",
-    "tags": ["reserva","cita","agenda","booking","mesa","turno"],
+    "tags": [
+      "servicios",
+      "citas",
+      "booking"
+    ],
     "previewPath": "/templates/reservas.html",
-    "palette": ["#f59e0b","#0b1020","#111827","#ffffff"]
+    "palette": [
+      "#f59e0b",
+      "#0b1020",
+      "#111827",
+      "#ffffff"
+    ]
   },
   {
     "id": "blog",
     "name": "Blog / Contenido",
-    "tags": ["blog","articulo","contenido","noticias","seo"],
+    "tags": [
+      "blog",
+      "contenido",
+      "seo"
+    ],
     "previewPath": "/templates/blog.html",
-    "palette": ["#60a5fa","#0b1020","#111827","#ffffff"]
+    "palette": [
+      "#60a5fa",
+      "#0b1020",
+      "#111827",
+      "#ffffff"
+    ]
   },
   {
-    "id": "portfolio",
-    "name": "Portfolio / Creador",
-    "tags": ["portfolio","creador","influencer","link","bio","links"],
+    "id": "creador",
+    "name": "Creador / Portfolio",
+    "tags": [
+      "creador",
+      "influencer",
+      "bio"
+    ],
     "previewPath": "/templates/portfolio.html",
-    "palette": ["#a78bfa","#0b1020","#111827","#ffffff"]
+    "palette": [
+      "#a78bfa",
+      "#0b1020",
+      "#111827",
+      "#ffffff"
+    ]
   }
 ]
